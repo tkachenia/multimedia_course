@@ -1,6 +1,6 @@
-setwd("D:/MyDisk/Git/multimedia_course/MIW")
+setwd("D:/MyDisk/Git/multimedia_course/MIW/miw01")
 Sys.setlocale("LC_CTYPE", "russian")
-source("base.R")
+source("../base.R")
 
 getLetter <- function(hex_eng, eng_idx, hex_rus, rus_idx, i) {
      letter <- ""
