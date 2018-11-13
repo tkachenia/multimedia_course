@@ -1,10 +1,12 @@
 setwd("c:/TkacheniaAV/MyDisc/Git/multimedia_course/MIW/miw02")
-setwd("D:/MyDisk/Git/multimedia_course/MIW/miw02")
+#setwd("D:/MyDisk/Git/multimedia_course/MIW/miw02")
+Sys.setlocale("LC_CTYPE", "russian")
 source("../base.R")
 
 getValue <- function(field, idx = 1) {
    item <- field[idx]
    name <- names(item)
+   
    as.integer(name)
 }
 
@@ -16,7 +18,8 @@ getSampleIdx <- function(NumChannels, SampleRate, BitsPerSample) {
    # 2 - ByteRate
    # 3 - BlockAlign
    # 4 - Subchunk2Size
-   idxError         <- sample(1:4, 1)
+   # 5, 6 - No error
+   idxError         <- sample(1:6, 1)
    if (getValue(BitsPerSample, idxBitsPerSample) == 8 && idxError == 4) {
       idxNumChannels <- 2
    }
@@ -33,11 +36,11 @@ getFields <- function(NumChannels, SampleRate, BitsPerSample, idx_list, Subchunk
    error <- ( if (sample(0:1, 1) == 0) -1 else 1 )
    if (idx_list$Error == 1) {
       ChunkSize <- ChunkSize + error
-   } else if (idxError == 2) {
+   } else if (idx_list$Error == 2) {
       ByteRate <- ByteRate + error
-   } else if (idxError == 3) {
+   } else if (idx_list$Error == 3) {
       BlockAlign <- BlockAlign + error
-   } else {
+   } else if (idx_list$Error == 4){
       Subchunk2Size <- Subchunk2Size + error
    }
    ChunkSize     <- make.Field(c(ChunkSize))
@@ -48,18 +51,44 @@ getFields <- function(NumChannels, SampleRate, BitsPerSample, idx_list, Subchunk
    list(ChunkSize = ChunkSize, ByteRate = ByteRate, BlockAlign = BlockAlign, Subchunk2Size = Subchunk2Size)
 }
 
+getData <- function(ChunkID, Format, Subchunk1ID, Subchunk1Size, AudioFormat, NumChannels, SampleRate, BitsPerSample, Subchunk2ID,
+                    fields_list, idx_list, value_count_in_line = 16, value_period = 3) {
+   data <- paste(ChunkID, fields_list$ChunkSize, Format,
+                 Subchunk1ID, Subchunk1Size, AudioFormat, NumChannels[idx_list$NumChannels], SampleRate[idx_list$SampleRate],
+                 fields_list$ByteRate, fields_list$BlockAlign, BitsPerSample[idx_list$BitsPerSample],
+                 Subchunk2ID, fields_list$Subchunk2Size)
+   data <- substring(data, seq(1, nchar(data), value_count_in_line*value_period),
+                           c(seq(value_count_in_line*value_period - 1, nchar(data), value_count_in_line*value_period), nchar(data)))
+   data
+}
+
+getError <- function(idxError) {
+   error <- ""
+   if (idxError == 1) {
+      error <- "ChunkSize"
+   } else if (idxError == 2) {
+      error <- "ByteRate"
+   } else if (idxError == 3) {
+      error <- "BlockAlign"
+   } else if (idxError == 4){
+      error <- "Subchunk2Size"
+   }
+   
+   error
+}
+
 make.Field <- function(values = c(""), ...) {
    if ( is.character(values[1]) ) {
       field <- sapply(values, hexStr)
    } else {
       field <- sapply(values, hexInt, ...)
    }
-   
    names(field) <- values
+   
    field
 }
 
-ksr1.make <- function(count) {
+miw2.make <- function(count) {
    ChunkID        <- make.Field(c("RIFF"))
    #ChunkSize     <- make.Field(c(0))
    Format         <- make.Field(c("WAVE"))
@@ -79,114 +108,47 @@ ksr1.make <- function(count) {
    for ( i in 1:( (count%/%2) + count %% 2) ) {
       idx_1 <- getSampleIdx(NumChannels, SampleRate, BitsPerSample)
       fields_1 <- getFields(NumChannels, SampleRate, BitsPerSample, idx_1, Subchunk1Size)
-      data_1 <- paste(ChunkID, fields_1$ChunkSize, Format,
-                      Subchunk1ID, Subchunk1Size, AudioFormat, NumChannels[idx_1$NumChannels], SampleRate[idx_1$SampleRate], fields_1$ByteRate, fields_1$BlockAlign, BitsPerSample[idx_1$BitsPerSample],
-                      Subchunk2ID, fields_1$Subchunk2Size)
-      data_1 <- substring(data_1, seq(1, nchar(data_1), 16*3), c(seq(16*3 - 1, nchar(data_1), 16*3), nchar(data_1)))
+      data_1 <- getData(ChunkID, Format, Subchunk1ID, Subchunk1Size, AudioFormat, NumChannels, SampleRate, BitsPerSample, Subchunk2ID, fields_1, idx_1)
       
-      
-      paste(year, 2*i - 1, sep="_")
-      paste(year, 2*i, sep="_")
+      idx_2 <- getSampleIdx(NumChannels, SampleRate, BitsPerSample)
+      fields_2 <- getFields(NumChannels, SampleRate, BitsPerSample, idx_2, Subchunk1Size)
+      data_2 <- getData(ChunkID, Format, Subchunk1ID, Subchunk1Size, AudioFormat, NumChannels, SampleRate, BitsPerSample, Subchunk2ID, fields_2, idx_2)
       
       text <- paste0(text,
                      "ФИО\t", "\t", "\t",
                      "ФИО\t", "\t", "\t", "\n")
       text <- paste0(text,
-                     "Группа\t", "\t", "\t",
-                     "Группа\t", "\t", "\t", "\n")
+                     paste(year, 2*i - 1, sep="_"), "\t", "Группа\t", paste(year, 2*i - 1, sep="_"), "\t",
+                     paste(year, 2*i, sep="_"), "\t", "Группа\t", paste(year, 2*i, sep="_"), "\t", "\n")
       text <- paste0(text,
-                     "Данные\t", data[1], "\t", "\t",
-                     "Данные\t", paste0(rep("\t", 6), collapse = ""), "\n")
+                     "Данные\t", data_1[1], "\t", "\t",
+                     "Данные\t", data_2[1], "\t", "\t", "\n")
       text <- paste0(text,
-                     paste(year, 2*i - 1, sep="_"), "\t", getHexString(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1), "\t", getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[2]), "\t\t",
-                     paste(year, 2*i, sep="_"), "\t", getHexString(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2), "\t", getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[2]), "\n")
+                     "\t", data_1[2], "\t", "\t",
+                     "\t", data_2[2], "\t", "\t", "\n")
       text <- paste0(text,
-                     "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[3]), "\t\t",
-                     "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[3]), "\n")
+                     "\t", data_1[3], "\t", "\t",
+                     "\t", data_2[3], "\t", "\t", "\n")
+      text <- paste0(text,
+                     "SampleRate:\t", "\t", getValue(SampleRate, idx_1$SampleRate), "\t",
+                     "SampleRate:\t", "\t", getValue(SampleRate, idx_2$SampleRate), "\t", "\n")
+      text <- paste0(text,
+                     "BitsPerSample:\t", "\t", getValue(BitsPerSample, idx_1$BitsPerSample), "\t",
+                     "BitsPerSample:\t", "\t", getValue(BitsPerSample, idx_2$BitsPerSample), "\n")
+      text <- paste0(text,
+                     "Методан. верны\t", "\t", (if (idx_1$Error < 5) "Нет," else "Да"), "\t",
+                     "Методан. верны\t", "\t", (if (idx_2$Error < 5) "Нет," else "Да"), "\t", "\n")
+      text <- paste0(text,
+                     "да/нет (почему)?\t", "\t", getError(idx_1$Error), "\t",
+                     "да/нет (почему)?\t", "\t", getError(idx_2$Error), "\t", "\n")
 
    }
+   
+   file <- file("miw2.txt", "w", encoding = "UTF-8")
+   write(text, file)
+   close(file)
+   
+   NULL
 }
 
-
-
-list_ChunkID <- c("RIFF")
-ChunkID <- sapply(list_ChunkID, hexStr)
-names(ChunkID) <- list_ChunkID
-
-list_ChunkSize <- c(0)
-ChunkSize <- sapply(list_ChunkSize, hexStr)
-names(ChunkSize) <- list_CChunkSize
-
-ChunkSize <- hexInt(12345, bytesCount = 4)
-names(ChunkSize) <- 12345
-
-
-hexStr(listChunkID)
-
-getLetter <- function(hex_eng, eng_idx, hex_rus, rus_idx, i) {
-     letter <- ""
-     if (i == 1) { # english
-          letter <- names(hex_eng[eng_idx])
-     } else {# russion
-          letter <- names(hex_rus[rus_idx[i - 1]])
-     }
-     letter
-}
-
-getHexString <- function(hex_eng, eng_idx, hex_rus, rus_idx, idx) {
-     hexString <- ""
-     for (i in 1:length(idx)) {
-          if (idx[i] == 1) { # english
-               hexString <- paste(hexString, hex_eng[eng_idx], sep = "\t")
-          } else { # russion
-               hexString <- paste(hexString, hex_rus[rus_idx[idx[i] - 1]], sep = "\t")
-          }
-     }
-     substring(hexString, 2)
-}
-
-ksr1.make <- function(count) {
-     eng <- "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-     rus <- "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
-     
-     hex_eng <- hexAbc(eng, prefix = "")
-     hex_rus <- hexAbc(rus, prefix = "")
-     
-     text <- ""
-     year <- format(Sys.Date(), "%y")
-     for ( i in 1:( (count%/%2) + count %% 2) ) {
-          eng_idx_1 <- sample(1:length(hex_eng), 1, replace=FALSE)
-          rus_idx_1 <- sample(1:length(hex_rus), 2, replace=FALSE)
-          idx_1 <- sample(1:3, 3, replace = FALSE) # 1 - english, 2 and 3 - russian
-
-          eng_idx_2 <- sample(1:length(hex_eng), 1, replace=FALSE)
-          rus_idx_2 <- sample(1:length(hex_rus), 2, replace=FALSE)
-          idx_2 <- sample(1:3, 3, replace = FALSE) # 1 - english, 2 and 3 - russian
-
-          text <- paste0(text,
-                         "ФИО\t", paste0(rep("\t", 5), collapse = ""), paste(year, 2*i - 1, sep="_"), "\t\t",
-                         "ФИО\t", paste0(rep("\t", 5), collapse = ""), paste(year, 2*i, sep="_"), "\n")
-          text <- paste0(text,
-                         "Группа\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[1]), "\t\t",
-                         "Группа\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[1]), "\n")
-          text <- paste0(text,
-                         paste(year, 2*i - 1, sep="_"), "\t", getHexString(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1), "\t", getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[2]), "\t\t",
-                         paste(year, 2*i, sep="_"), "\t", getHexString(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2), "\t", getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[2]), "\n")
-          text <- paste0(text,
-                         "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[3]), "\t\t",
-                         "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[3]), "\n")
-     }
-     
-     file <- file("miw1.txt", "w", encoding = "UTF-8")
-     write(text, file)
-     close(file)
-     
-     NULL
-}
-
-ksr1.make(36)
-
-
-fs <- 8000
-bits <- intToBits(fs)
-packBits(bits, type = "raw")
+miw2.make(40)
