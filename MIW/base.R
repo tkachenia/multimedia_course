@@ -1,6 +1,3 @@
-eng <- "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
-rus <- "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
-
 hexAbc <- function(str_abc, prefix = "") {
      
   abc <- strsplit(str_abc, "")[[1]]
