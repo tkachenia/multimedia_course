@@ -1,3 +1,4 @@
+#setwd("c:/TkacheniaAV/MyDisc/Git/multimedia_course/MIW/miw01")
 setwd("D:/MyDisk/Git/multimedia_course/MIW/miw01")
 Sys.setlocale("LC_CTYPE", "russian")
 source("../base.R")
@@ -24,7 +25,7 @@ getHexString <- function(hex_eng, eng_idx, hex_rus, rus_idx, idx) {
      substring(hexString, 2)
 }
 
-ksr1.make <- function(count) {
+miw1.make <- function(count) {
      eng <- "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
      rus <- "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
      
@@ -63,4 +64,4 @@ ksr1.make <- function(count) {
      NULL
 }
 
-ksr1.make(36)
+miw1.make(36)
