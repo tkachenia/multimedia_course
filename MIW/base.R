@@ -20,6 +20,7 @@ hexStr <- function(str, prefix = "") {
    str_utf8 <- enc2utf8(str)
    hex <- charToRaw(str_utf8)
    utf8 <- paste0(prefix, toupper(hex))
+   
    paste(utf8, collapse = " ")
 }
 
@@ -36,5 +37,17 @@ hexInt <- function(int, bytesCount = 4, endian = c("little", "big"), prefix = ""
    if (endian[1] == "big") {
       bytes <- rev(bytes)
    }
+   
    paste(bytes, collapse = " ")
+}
+
+makeField <- function(values = c(""), ...) {
+   if ( is.character(values[1]) ) {
+      field <- sapply(values, hexStr)
+   } else {
+      field <- sapply(values, hexInt, ...)
+   }
+   names(field) <- values
+   
+   list(field)
 }

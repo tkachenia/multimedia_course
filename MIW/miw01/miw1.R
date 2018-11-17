@@ -72,4 +72,4 @@ miw1.make <- function(count, train = F) {
    NULL
 }
 
-miw1.make(36, train = T)
+miw1.make(36)
