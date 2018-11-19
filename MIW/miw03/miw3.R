@@ -14,7 +14,7 @@ getFields <- function() {
    fields["biWidth"]         <- NA
    fields["biHeight"]        <- NA
    fields["biPlanes"]        <- makeField(1, bytesCount = 2)
-   fields["biBitCount"]      <- makeField(3*c(4, 8, 16, 24, 32), bytesCount = 2)
+   fields["biBitCount"]      <- makeField(3*c(8, 16, 24, 32), bytesCount = 2)
    fields["biCompression"]   <- makeField(0)
    fields["biSizeImage"]     <- NA
    fields["biXPelsPerMeter"] <- makeField(0)
@@ -30,10 +30,10 @@ getFields <- function() {
 }
 
 getErrorIdx <- function(fields, train = F) {
-   idxError <- sample(1:length(fields$tag), 1)
+   idxError <- sample(1:(length(fields$tag) - 4), 1)
    if (!train) {
       # 0  - No error
-      idxError <- sample(c(0, 0, which(fields$tag %in% c("bfSize", "biSizeImage"))), 1)
+      idxError <- sample(c(0, which(fields$tag %in% c("bfSize", "biSizeImage"))), 1)
    }
    
    idxError
@@ -47,29 +47,35 @@ getValue <- function(field, idx = 1) {
 }
 
 getSampleIdx <- function(fields, idxError) {
-   idxbiBitCount   <- sample(1:length(fields$field["biBitCount"]), 1)
-   
-   if (getValue(fields$field["biBitCount"][[1]], idxbiBitCount) == 32) {
-      idxBitsPerSample <- 4
-   }
+   idxbfType     <- sample(1:length(fields$field["bfType"]), 1)
+   idxbiBitCount <- sample(1:length(fields$field["biBitCount"]), 1)
 
-   list(NumChannels = idxNumChannels, SampleRate = idxSampleRate, BitsPerSample = idxBitsPerSample)
+   if (getValue(fields$field["biBitCount"][[1]], idxbiBitCount) == 32 && idxError == which(fields$tag %in% "biBitCount")) {
+      idxBitsPerSample <- 3
+   }
+   
+   
+   list(bfType = idxbfType, biBitCount = idxbiBitCount)
 }
 
 getFieldsUpdate <- function(fields, idx) {
-   fields$field["NumChannels"] <- list(fields$field["NumChannels"][[1]][idx$NumChannels])
-   fields$field["SampleRate"]  <- list(fields$field["SampleRate"][[1]][idx$SampleRate])
-   fields$field["BitsPerSample"] <- list(fields$field["BitsPerSample"][[1]][idx$BitsPerSample])
+   fields$field["bfType"] <- list(fields$field["bfType"][[1]][idx$bfType])
+   fields$field["biBitCount"]  <- list(fields$field["biBitCount"][[1]][idx$biBitCount])
    
-   BlockAlign    <- getValue(fields$field["NumChannels"][[1]])*getValue(fields$field["BitsPerSample"][[1]])/8
-   ByteRate      <- getValue(fields$field["SampleRate"][[1]])*BlockAlign
-   Subchunk2Size <- sample(500:1500, 1)*BlockAlign
-   ChunkSize     <- 4 + (8 + getValue(fields$field["Subchunk1Size"][[1]])) + (8 + Subchunk2Size)
+   while(T) {
+      biWidth <- sample(1:1024, 1)
+      rowSize <- ((getValue(fields$field["biBitCount"][[1]])/8)*biWidth)/4
+      if (floor(rowSize) != ceiling(rowSize)) break
+   }
+   biHeight    <- sample(-768, 768, 1)
+   if (biHeight == 0) biHeight <- 1
+   biSizeImage <- 4*ceiling(rowsize)*biHeight
+   bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"][[1]])
 
-   fields$field["ChunkSize"]     <- makeField(c(ChunkSize))
-   fields$field["ByteRate"]      <- makeField(c(ByteRate))
-   fields$field["BlockAlign"]    <- makeField(c(BlockAlign), bytesCount = 2)
-   fields$field["Subchunk2Size"] <- makeField(c(Subchunk2Size))
+   fields$field["bfSize"]     <- makeField(bfSize)
+   fields$field["biWidth"]      <- makeField(biWidth)
+   fields$field["BlockAlign"]    <- makeField(biHeight)
+   fields$field["Subchunk2Size"] <- makeField(biSizeImage)
 
    fields
 }
@@ -78,7 +84,13 @@ getFieldsError <- function (fields, idxError, prefix = "", train = F) {
    if (idxError == 0) return(fields)
    
    error <- sample(1:255, 1)
-   if (train) error <- ( if (sample(0:1, 1) == 0) -1 else 1 )
+   if (train) {
+      biSizeImage <- (getValue(fields$field["biBitCount"][[1]])/8)*biWidth*biHeight
+      bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"][[1]])
+      fields$field[fields$tag[idxError]][[1]][[1]] <- (if (fields$tag[idxError] == "biSizeImage") biSizeImage else bfSize)
+   } else {
+      
+   }
    
    strHex <- fields$field[fields$tag[idxError]][[1]][[1]]
    firstHexValue <- substring(strHex, nchar(prefix) + 1, nchar(prefix) + 2)
