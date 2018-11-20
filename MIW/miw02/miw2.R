@@ -5,18 +5,18 @@ source("../base.R")
 
 getFields <- function() {
    fields <- list()
-   fields["ChunkID"] <- makeField(c("RIFF"))
+   fields["ChunkID"] <- makeField("RIFF")
    fields["ChunkSize"] <- NA
-   fields["Format"] <- makeField(c("WAVE"))
-   fields["Subchunk1ID"] <- makeField(c("fmt "))
-   fields["Subchunk1Size"] <- makeField(c(16))
-   fields["AudioFormat"] <- makeField(c(1), bytesCount = 2)
+   fields["Format"] <- makeField("WAVE")
+   fields["Subchunk1ID"] <- makeField("fmt ")
+   fields["Subchunk1Size"] <- makeField(16)
+   fields["AudioFormat"] <- makeField(1, bytesCount = 2)
    fields["NumChannels"] <- makeField(c(1, 2), bytesCount = 2)
    fields["SampleRate"] <- makeField(c(8000, 16000, 22050, 44100, 48000, 96000, 192000))
    fields["ByteRate"] <- NA
    fields["BlockAlign"] <- NA
    fields["BitsPerSample"] <- makeField(c(8, 16, 24, 32), bytesCount = 2)
-   fields["Subchunk2ID"] <- makeField(c("data"))
+   fields["Subchunk2ID"] <- makeField("data")
    fields["Subchunk2Size"] <- NA
    
    tags <- as.vector(c("ChunkID", "ChunkSize", "Format",
@@ -44,9 +44,9 @@ getValue <- function(field, idx = 1) {
 }
 
 getSampleIdx <- function(fields, idxError) {
-   idxNumChannels   <- sample(1:length(fields$field["NumChannels"]), 1)
-   idxSampleRate    <- sample(1:length(fields$field["SampleRate"]), 1)
-   idxBitsPerSample <- sample(1:length(fields$field["BitsPerSample"]), 1)
+   idxNumChannels   <- sample(1:length(fields$field["NumChannels"][[1]]), 1)
+   idxSampleRate    <- sample(1:length(fields$field["SampleRate"][[1]]), 1)
+   idxBitsPerSample <- sample(1:length(fields$field["BitsPerSample"][[1]]), 1)
    
    if (getValue(fields$field["BitsPerSample"][[1]], idxBitsPerSample) == 8 && idxError == which(fields$tag %in% "Subchunk2Size")) {
       idxBitsPerSample <- 2
@@ -76,7 +76,7 @@ getFieldsUpdate <- function(fields, idx) {
 getFieldsError <- function (fields, idxError, prefix = "", train = F) {
    if (idxError == 0) return(fields)
    
-   error <- sample(1:255, 1)
+   error <- sample(1:254, 1)
    if (train) error <- ( if (sample(0:1, 1) == 0) -1 else 1 )
    
    strHex <- fields$field[fields$tag[idxError]][[1]][[1]]
@@ -94,26 +94,26 @@ getData <- function(fields, value_count_in_line = 16, prefix = "") {
       data <- paste(data, fields$field[fields$tag[i]])
    }
    data <- substring(data, 2)
-   data <- substring(data, seq(1, nchar(data), value_count_in_line*(nchar(prefix) + 2)),
-                           c(seq(value_count_in_line*(nchar(prefix) + 2) - 1, nchar(data), value_count_in_line*(nchar(prefix) + 2)), nchar(data)))
+   data <- substring(data, seq(1, nchar(data), value_count_in_line*(nchar(prefix) + 2 + 1)),
+                           c(seq(value_count_in_line*(nchar(prefix) + 2 + 1) - 1, nchar(data), value_count_in_line*(nchar(prefix) + 2 + 1)), nchar(data)))
    data
 }
 
 miw2.make <- function(count, train = F) {
-   fields_ <- getFields()
+   fields <- getFields()
    text <- ""
    year <- format(Sys.Date(), "%y")
    if (train) year <- "trn"
    for ( i in 1:( (count%/%2) + count %% 2) ) {
-      error_1  <- getErrorIdx(fields_, train)
-      idx_1    <- getSampleIdx(fields_, error_1)
-      fields_1 <- getFieldsUpdate(fields_, idx_1)
+      error_1  <- getErrorIdx(fields, train)
+      idx_1    <- getSampleIdx(fields, error_1)
+      fields_1 <- getFieldsUpdate(fields, idx_1)
       fields_1 <- getFieldsError(fields_1, error_1, train = train)
       data_1   <- getData(fields_1)
       
-      error_2  <- getErrorIdx(fields_, train)
-      idx_2    <- getSampleIdx(fields_, error_2)
-      fields_2 <- getFieldsUpdate(fields_, idx_2)
+      error_2  <- getErrorIdx(fields, train)
+      idx_2    <- getSampleIdx(fields, error_2)
+      fields_2 <- getFieldsUpdate(fields, idx_2)
       fields_2 <- getFieldsError(fields_2, error_2, train = train)
       data_2   <- getData(fields_2)
 
@@ -126,12 +126,11 @@ miw2.make <- function(count, train = F) {
       text <- paste0(text,
                      "Данные\t", data_1[1], "\t", "\t",
                      "Данные\t", data_2[1], "\t", "\t", "\n")
+      for (i in (1:length(data_1))) {
       text <- paste0(text,
-                     "\t", data_1[2], "\t", "\t",
-                     "\t", data_2[2], "\t", "\t", "\n")
-      text <- paste0(text,
-                     "\t", data_1[3], "\t", "\t",
-                     "\t", data_2[3], "\t", "\t", "\n")
+                     "\t", data_1[i], "\t", "\t",
+                     "\t", data_2[i], "\t", "\t", "\n")
+      }
       text <- paste0(text,
                      "SampleRate:\t", "\t", getValue(fields_1$field["SampleRate"][[1]]), "\t",
                      "SampleRate:\t", "\t", getValue(fields_2$field["SampleRate"][[1]]), "\t", "\n")
