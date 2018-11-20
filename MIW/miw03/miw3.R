@@ -47,35 +47,35 @@ getValue <- function(field, idx = 1) {
 }
 
 getSampleIdx <- function(fields, idxError) {
-   idxbfType     <- sample(1:length(fields$field["bfType"]), 1)
-   idxbiBitCount <- sample(1:length(fields$field["biBitCount"]), 1)
+   idxbfType     <- sample(1:length(fields$field["bfType"][[1]]), 1)
+   idxbiBitCount <- sample(1:length(fields$field["biBitCount"][[1]]), 1)
 
-   if (getValue(fields$field["biBitCount"][[1]], idxbiBitCount) == 32 && idxError == which(fields$tag %in% "biBitCount")) {
-      idxBitsPerSample <- 3
+   if (getValue(fields$field["biBitCount"][[1]], idxbiBitCount) == 3*32 && any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) {
+      idxbiBitCount <- 3
    }
-   
    
    list(bfType = idxbfType, biBitCount = idxbiBitCount)
 }
 
-getFieldsUpdate <- function(fields, idx) {
+getFieldsUpdate <- function(fields, idx, idxError) {
    fields$field["bfType"] <- list(fields$field["bfType"][[1]][idx$bfType])
    fields$field["biBitCount"]  <- list(fields$field["biBitCount"][[1]][idx$biBitCount])
    
    while(T) {
       biWidth <- sample(1:1024, 1)
       rowSize <- ((getValue(fields$field["biBitCount"][[1]])/8)*biWidth)/4
+      if (!any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) break
       if (floor(rowSize) != ceiling(rowSize)) break
    }
-   biHeight    <- sample(-768, 768, 1)
+   biHeight    <- sample(-768:768, 1)
    if (biHeight == 0) biHeight <- 1
-   biSizeImage <- 4*ceiling(rowsize)*biHeight
+   biSizeImage <- 4*ceiling(rowSize)*abs(biHeight)
    bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"][[1]])
 
-   fields$field["bfSize"]     <- makeField(bfSize)
-   fields$field["biWidth"]      <- makeField(biWidth)
-   fields$field["BlockAlign"]    <- makeField(biHeight)
-   fields$field["Subchunk2Size"] <- makeField(biSizeImage)
+   fields$field["bfSize"]      <- makeField(bfSize)
+   fields$field["biWidth"]     <- makeField(biWidth)
+   fields$field["biHeight"]    <- makeField(biHeight)
+   fields$field["biSizeImage"] <- makeField(biSizeImage)
 
    fields
 }
@@ -83,21 +83,19 @@ getFieldsUpdate <- function(fields, idx) {
 getFieldsError <- function (fields, idxError, prefix = "", train = F) {
    if (idxError == 0) return(fields)
    
-   error <- sample(1:255, 1)
-   if (train) {
+   if (!train) {
       biSizeImage <- (getValue(fields$field["biBitCount"][[1]])/8)*biWidth*biHeight
       bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"][[1]])
       fields$field[fields$tag[idxError]][[1]][[1]] <- (if (fields$tag[idxError] == "biSizeImage") biSizeImage else bfSize)
    } else {
-      
+      error <- sample(1:254, 1)
+      strHex <- fields$field[fields$tag[idxError]][[1]][[1]]
+      firstHexValue <- substring(strHex, nchar(prefix) + 1, nchar(prefix) + 2)
+      firstValue <- (strtoi(firstHexValue, base = 16) + error) %% 255
+      newFirstHexValue <- hexInt(firstValue, bytesCount = 1, prefix = prefix)
+      substring(fields$field[fields$tag[idxError]][[1]][[1]], nchar(prefix) + 1, nchar(prefix) + 2) <- newFirstHexValue
    }
-   
-   strHex <- fields$field[fields$tag[idxError]][[1]][[1]]
-   firstHexValue <- substring(strHex, nchar(prefix) + 1, nchar(prefix) + 2)
-   firstValue <- (strtoi(firstHexValue, base = 16) + error) %% 255
-   newFirstHexValue <- hexInt(firstValue, bytesCount = 1, prefix = prefix)
-   substring(fields$field[fields$tag[idxError]][[1]][[1]], nchar(prefix) + 1, nchar(prefix) + 2) <- newFirstHexValue
-   
+
    fields
 }
 
@@ -107,26 +105,26 @@ getData <- function(fields, value_count_in_line = 16, prefix = "") {
       data <- paste(data, fields$field[fields$tag[i]])
    }
    data <- substring(data, 2)
-   data <- substring(data, seq(1, nchar(data), value_count_in_line*(nchar(prefix) + 2)),
-                           c(seq(value_count_in_line*(nchar(prefix) + 2) - 1, nchar(data), value_count_in_line*(nchar(prefix) + 2)), nchar(data)))
+   data <- substring(data, seq(1, nchar(data), value_count_in_line*(nchar(prefix) + 2 + 1)),
+                           c(seq(value_count_in_line*(nchar(prefix) + 2 + 1) - 1, nchar(data), value_count_in_line*(nchar(prefix) + 2 + 1)), nchar(data)))
    data
 }
 
-miw2.make <- function(count, train = F) {
-   fields_ <- getFields()
+miw3.make <- function(count, train = F) {
+   fields <- getFields()
    text <- ""
    year <- format(Sys.Date(), "%y")
    if (train) year <- "trn"
    for ( i in 1:( (count%/%2) + count %% 2) ) {
-      error_1  <- getErrorIdx(fields_, train)
-      idx_1    <- getSampleIdx(fields_, error_1)
-      fields_1 <- getFieldsUpdate(fields_, idx_1)
+      error_1  <- getErrorIdx(fields, train)
+      idx_1    <- getSampleIdx(fields, error_1)
+      fields_1 <- getFieldsUpdate(fields, idx_1, error_1)
       fields_1 <- getFieldsError(fields_1, error_1, train = train)
       data_1   <- getData(fields_1)
       
-      error_2  <- getErrorIdx(fields_, train)
-      idx_2    <- getSampleIdx(fields_, error_2)
-      fields_2 <- getFieldsUpdate(fields_, idx_2)
+      error_2  <- getErrorIdx(fields, train)
+      idx_2    <- getSampleIdx(fields, error_2)
+      fields_2 <- getFieldsUpdate(fields, idx_2, error_2)
       fields_2 <- getFieldsError(fields_2, error_2, train = train)
       data_2   <- getData(fields_2)
 
@@ -139,12 +137,11 @@ miw2.make <- function(count, train = F) {
       text <- paste0(text,
                      "Данные\t", data_1[1], "\t", "\t",
                      "Данные\t", data_2[1], "\t", "\t", "\n")
-      text <- paste0(text,
-                     "\t", data_1[2], "\t", "\t",
-                     "\t", data_2[2], "\t", "\t", "\n")
-      text <- paste0(text,
-                     "\t", data_1[3], "\t", "\t",
-                     "\t", data_2[3], "\t", "\t", "\n")
+      for (i in (2:length(data_1))) {
+         text <- paste0(text,
+                        "\t", data_1[i], "\t", "\t",
+                        "\t", data_2[i], "\t", "\t", "\n")
+      }
       text <- paste0(text,
                      "bfSize:\t", "\t", getValue(fields_1$field["bfSize"][[1]]), "\t",
                      "bfSize:\t", "\t", getValue(fields_2$field["bfSize"][[1]]), "\t", "\n")
@@ -160,11 +157,11 @@ miw2.make <- function(count, train = F) {
 
    }
    
-   file <- file("miw2.txt", "w", encoding = "UTF-8")
+   file <- file("miw3.txt", "w", encoding = "UTF-8")
    write(text, file)
    close(file)
    
    NULL
 }
 
-miw2.make(40)
+miw3.make(40, T)
