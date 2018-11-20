@@ -40,7 +40,7 @@ getErrorIdx <- function(fields, train = F) {
 }
 
 getValue <- function(field, idx = 1) {
-   item <- field[idx]
+   item <- field[[1]][idx]
    name <- names(item)
    
    as.integer(name)
@@ -50,7 +50,7 @@ getSampleIdx <- function(fields, idxError) {
    idxbfType     <- sample(1:length(fields$field["bfType"][[1]]), 1)
    idxbiBitCount <- sample(1:length(fields$field["biBitCount"][[1]]), 1)
 
-   if (getValue(fields$field["biBitCount"][[1]], idxbiBitCount) == 3*32 && any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) {
+   if (getValue(fields$field["biBitCount"], idxbiBitCount) == 3*32 && any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) {
       idxbiBitCount <- 3
    }
    
@@ -63,14 +63,14 @@ getFieldsUpdate <- function(fields, idx, idxError) {
    
    while(T) {
       biWidth <- sample(1:1024, 1)
-      rowSize <- ((getValue(fields$field["biBitCount"][[1]])/8)*biWidth)/4
+      rowSize <- ((getValue(fields$field["biBitCount"])/8)*biWidth)/4
       if (!any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) break
       if (floor(rowSize) != ceiling(rowSize)) break
    }
    biHeight    <- sample(-768:768, 1)
    if (biHeight == 0) biHeight <- 1
    biSizeImage <- 4*ceiling(rowSize)*abs(biHeight)
-   bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"][[1]])
+   bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"])
 
    fields$field["bfSize"]      <- makeField(bfSize)
    fields$field["biWidth"]     <- makeField(biWidth)
@@ -84,8 +84,8 @@ getFieldsError <- function (fields, idxError, prefix = "", train = F) {
    if (idxError == 0) return(fields)
    
    if (!train) {
-      biSizeImage <- (getValue(fields$field["biBitCount"][[1]])/8)*biWidth*biHeight
-      bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"][[1]])
+      biSizeImage <- (getValue(fields$field["biBitCount"])/8)*getValue(fields$field["biWidth"])*abs(getValue(fields$field["biHeight"]))
+      bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"])
       fields$field[fields$tag[idxError]][[1]][[1]] <- (if (fields$tag[idxError] == "biSizeImage") biSizeImage else bfSize)
    } else {
       error <- sample(1:254, 1)
@@ -143,11 +143,11 @@ miw3.make <- function(count, train = F) {
                         "\t", data_2[i], "\t", "\t", "\n")
       }
       text <- paste0(text,
-                     "bfSize:\t", "\t", getValue(fields_1$field["bfSize"][[1]]), "\t",
-                     "bfSize:\t", "\t", getValue(fields_2$field["bfSize"][[1]]), "\t", "\n")
+                     "bfSize:\t", "\t", getValue(fields_1$field["bfSize"]), "\t",
+                     "bfSize:\t", "\t", getValue(fields_2$field["bfSize"]), "\t", "\n")
       text <- paste0(text,
-                     "biBitCount:\t", "\t", getValue(fields_1$field["biBitCount"][[1]]), "\t",
-                     "biBitCount:\t", "\t", getValue(fields_2$field["biBitCount"][[1]]), "\n")
+                     "biBitCount:\t", "\t", getValue(fields_1$field["biBitCount"]), "\t",
+                     "biBitCount:\t", "\t", getValue(fields_2$field["biBitCount"]), "\n")
       text <- paste0(text,
                      "Методан. верны\t", "\t", (if (error_1 != 0) "Нет," else "Да"), "\t",
                      "Методан. верны\t", "\t", (if (error_2 != 0) "Нет," else "Да"), "\t", "\n")
@@ -164,4 +164,4 @@ miw3.make <- function(count, train = F) {
    NULL
 }
 
-miw3.make(40, T)
+miw3.make(50)
