@@ -37,7 +37,7 @@ getErrorIdx <- function(fields, train = F) {
 }
 
 getValue <- function(field, idx = 1) {
-   item <- field[idx]
+   item <- field[[1]][idx]
    name <- names(item)
    
    as.integer(name)
@@ -48,7 +48,7 @@ getSampleIdx <- function(fields, idxError) {
    idxSampleRate    <- sample(1:length(fields$field["SampleRate"][[1]]), 1)
    idxBitsPerSample <- sample(1:length(fields$field["BitsPerSample"][[1]]), 1)
    
-   if (getValue(fields$field["BitsPerSample"][[1]], idxBitsPerSample) == 8 && idxError == which(fields$tag %in% "Subchunk2Size")) {
+   if (getValue(fields$field["BitsPerSample"], idxBitsPerSample) == 8 && idxError == which(fields$tag %in% "Subchunk2Size")) {
       idxBitsPerSample <- 2
    }
 
@@ -60,10 +60,10 @@ getFieldsUpdate <- function(fields, idx) {
    fields$field["SampleRate"]  <- list(fields$field["SampleRate"][[1]][idx$SampleRate])
    fields$field["BitsPerSample"] <- list(fields$field["BitsPerSample"][[1]][idx$BitsPerSample])
    
-   BlockAlign    <- getValue(fields$field["NumChannels"][[1]])*getValue(fields$field["BitsPerSample"][[1]])/8
-   ByteRate      <- getValue(fields$field["SampleRate"][[1]])*BlockAlign
+   BlockAlign    <- getValue(fields$field["NumChannels"])*getValue(fields$field["BitsPerSample"])/8
+   ByteRate      <- getValue(fields$field["SampleRate"])*BlockAlign
    Subchunk2Size <- sample(500:1500, 1)*BlockAlign
-   ChunkSize     <- 4 + (8 + getValue(fields$field["Subchunk1Size"][[1]])) + (8 + Subchunk2Size)
+   ChunkSize     <- 4 + (8 + getValue(fields$field["Subchunk1Size"])) + (8 + Subchunk2Size)
 
    fields$field["ChunkSize"]     <- makeField(c(ChunkSize))
    fields$field["ByteRate"]      <- makeField(c(ByteRate))
@@ -126,17 +126,17 @@ miw2.make <- function(count, train = F) {
       text <- paste0(text,
                      "Данные\t", data_1[1], "\t", "\t",
                      "Данные\t", data_2[1], "\t", "\t", "\n")
-      for (i in (1:length(data_1))) {
+      for (i in (2:length(data_1))) {
       text <- paste0(text,
                      "\t", data_1[i], "\t", "\t",
                      "\t", data_2[i], "\t", "\t", "\n")
       }
       text <- paste0(text,
-                     "SampleRate:\t", "\t", getValue(fields_1$field["SampleRate"][[1]]), "\t",
-                     "SampleRate:\t", "\t", getValue(fields_2$field["SampleRate"][[1]]), "\t", "\n")
+                     "SampleRate:\t", "\t", getValue(fields_1$field["SampleRate"]), "\t",
+                     "SampleRate:\t", "\t", getValue(fields_2$field["SampleRate"]), "\t", "\n")
       text <- paste0(text,
-                     "BitsPerSample:\t", "\t", getValue(fields_1$field["BitsPerSample"][[1]]), "\t",
-                     "BitsPerSample:\t", "\t", getValue(fields_2$field["BitsPerSample"][[1]]), "\n")
+                     "BitsPerSample:\t", "\t", getValue(fields_1$field["BitsPerSample"]), "\t",
+                     "BitsPerSample:\t", "\t", getValue(fields_2$field["BitsPerSample"]), "\n")
       text <- paste0(text,
                      "Методан. верны\t", "\t", (if (error_1 != 0) "Нет," else "Да"), "\t",
                      "Методан. верны\t", "\t", (if (error_2 != 0) "Нет," else "Да"), "\t", "\n")
@@ -153,4 +153,4 @@ miw2.make <- function(count, train = F) {
    NULL
 }
 
-miw2.make(40)
+miw2.make(50)
