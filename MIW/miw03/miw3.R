@@ -86,7 +86,7 @@ getFieldsError <- function (fields, idxError, prefix = "", train = F) {
    if (!train) {
       biSizeImage <- (getValue(fields$field["biBitCount"])/8)*getValue(fields$field["biWidth"])*abs(getValue(fields$field["biHeight"]))
       bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"])
-      fields$field[fields$tag[idxError]][[1]][[1]] <- (if (fields$tag[idxError] == "biSizeImage") biSizeImage else bfSize)
+      fields$field[fields$tag[idxError]] <- makeField(if (fields$tag[idxError] == "biSizeImage") biSizeImage else bfSize)
    } else {
       error <- sample(1:254, 1)
       strHex <- fields$field[fields$tag[idxError]][[1]][[1]]
