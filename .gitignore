@@ -1,2 +1,7 @@
 *.RData
 *.Rhistory
+
+*.png
+*.wav
+*.mp3
+*.flac
