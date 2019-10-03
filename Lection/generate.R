@@ -1,10 +1,30 @@
+g_lwd_scale <- 1.5
+
+plot.set.par <- function(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5)) {
+     par(cex = cex, cex.axis = cex.axis, cex.lab = cex.lab, cex.main = cex.main, cex.sub = cex.sub, mai = mai)
+}
+
+plot.points <- function(x, y = NULL, type = "p", pch = 0, lwd = 2) {
+   #wrapper for built in function points
+   plot.set.par()
+   
+   points(x = x , y = y, type = type, pch = pch, lwd = lwd * g_lwd_scale)
+}
+
+plot.lines <- function(x, y = NULL, type = "l", lty = "dotted", col = "black", lwd = 1) {
+   #wrapper for built in function lines
+   plot.set.par()
+   
+   lines(x = x , y = y, type = type, lty = lty, col = col, lwd = lwd * g_lwd_scale)
+}
+
 plot.gen.const <- function(amp = 1, draw_ox = FALSE, type = "l", lty = "solid", lwd = 5) {
      # amp - amplitude of sin [0, 1]
-     par(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5))
+     plot.set.par()
      
-     plot(c(-1, 1), c(amp, amp), xlim = c(0, 0.06), ylim = c(-1, 1), type = type, lty = lty, main = "Посто\u44fнное значение", xlab = "Врем\u44f, с", ylab = "Амплитуда", col = "black", lwd = lwd, las = 1)
+     plot(c(-1, 1), c(amp, amp), xlim = c(0, 0.06), ylim = c(-1, 1), type = type, lty = lty, main = "Посто\u44fнное значение", xlab = "Врем\u44f, с", ylab = "Амплитуда", col = "black", lwd = lwd * g_lwd_scale, las = 1)
      if (draw_ox)
-          lines(c(-1, 1), c(0, 0), type = "l", col = "black", lwd = max(1, lwd - 3))
+          lines(c(-1, 1), c(0, 0), type = "l", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
 }
 
 plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, fs_print = fs, type = "l", lty = "solid", lwd = 5) {
@@ -15,21 +35,21 @@ plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, draw_ox = F
      # shift - shift horizontally plot (sec)
      # ...
      # fs_print - printed frequency sample rate (Hz)
-     par(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5))
+     plot.set.par()
      
      t <- seq(-1 + shift, 1, dt)
      y <- amp*sign(sin(2*pi*fs*t))
-     plot(t, y, xlim = c(0, 0.06), ylim = c(-1, 1), type = type, lty = lty, main = paste0("Меандр (", fs_print, " Гц)"), xlab = "Врем\u44f, с", ylab = "Амплитуда", col = "black", lwd = lwd, las = 1)
+     plot(t, y, xlim = c(0, 0.06), ylim = c(-1, 1), type = type, lty = lty, main = paste0("Меандр (", fs_print, " Гц)"), xlab = "Врем\u44f, с", ylab = "Амплитуда", col = "black", lwd = lwd * g_lwd_scale, las = 1)
      if (draw_ox)
-          lines(c(-1, 1), c(0, 0), type = "l", lty = "solid", col = "black", lwd = max(1, lwd - 3))
+          lines(c(-1, 1), c(0, 0), type = "l", lty = "solid", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
      if (draw_pattern_sin) {
           t0 <- seq(-1, 2, 0.0001)
           y0 <- amp*sin(2*pi*fs*t0)
-          lines(t0, y0, xlim = c(0, 0.06), ylim = c(-1, 1), type = "l", lty = "dotted", col = "black", lwd=max(2, lwd - 2))
+          lines(t0, y0, xlim = c(0, 0.06), ylim = c(-1, 1), type = "l", lty = "dotted", col = "black", lwd = max(2, lwd - 2) * g_lwd_scale)
      }
      if (draw_period)
           for (i in 0:6)
-               lines(c(i/fs, i/fs), c(-2, 2), type = "l", lty = "dotted", col = "black", lwd=max(1, lwd - 3))
+               lines(c(i/fs, i/fs), c(-2, 2), type = "l", lty = "dotted", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
 }
 
 plot.gen.sin <- function(fs, amp = 1, dt = 1/(1000*fs), shift = 0, draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, title = "", fs_print = fs, type = "l", lty = "solid", lwd = 5) {
@@ -40,21 +60,21 @@ plot.gen.sin <- function(fs, amp = 1, dt = 1/(1000*fs), shift = 0, draw_ox = FAL
      # shift - shift horizontally plot (sec)
      # ...
      # fs_print - printed frequency sample rate (Hz)
-     par(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5))
+     plot.set.par()
      
      t <- seq(-1 + shift, 1, dt)
      y <- amp*sin(2*pi*fs*t)
-     plot(t, y, xlim = c(0, 0.06), ylim = c(-1, 1), type = type, lty = lty, main = (if (title == "") paste0("sin(2pi*", fs_print, "Гц*t)") else title), xlab = "Врем\u44f, с", ylab = "Амплитуда", col = "black", lwd = lwd, las = 1)
+     plot(t, y, xlim = c(0, 0.06), ylim = c(-1, 1), type = type, lty = lty, main = (if (title == "") paste0("sin(2pi*", fs_print, "Гц*t)") else title), xlab = "Врем\u44f, с", ylab = "Амплитуда", col = "black", lwd = lwd * g_lwd_scale, las = 1)
      if (draw_ox)
-          lines(c(-1, 1), c(0, 0), type = "l", lty = "solid", col = "black", lwd = max(1, lwd - 3))
+          lines(c(-1, 1), c(0, 0), type = "l", lty = "solid", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
      if (draw_pattern_sin) {
           t0 <- seq(-1, 2, 0.0001)
           y0 <- amp*sin(2*pi*fs*t0)
-          lines(t0, y0, xlim = c(0, 0.06), ylim = c(-1, 1), type = "l", lty = "dotted", col = "black", lwd=max(2, lwd - 2))
+          lines(t0, y0, xlim = c(0, 0.06), ylim = c(-1, 1), type = "l", lty = "dotted", col = "black", lwd = max(2, lwd - 2) * g_lwd_scale)
      }
      if (draw_period)
           for (i in 0:6)
-               lines(c(i/fs, i/fs), c(-2, 2), type = "l", lty = "dotted", col = "black", lwd=max(1, lwd - 3))
+               lines(c(i/fs, i/fs), c(-2, 2), type = "l", lty = "dotted", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
 }
 
 plot.gen.multi_sin <- function(df, xlim = c(0, 0.06), title = "", type = "l", draw_period = FALSE) {
@@ -67,7 +87,7 @@ plot.gen.multi_sin <- function(df, xlim = c(0, 0.06), title = "", type = "l", dr
      # df.phi - phase (specifies (in radians) where in its cycle the oscillation is at t = 0)
      # df.lty - plot.default (lty)
      # df.lwd - plot.default (lwd)
-     par(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5))
+     plot.set.par()
      
      df$amp[df$amp < -1] <- -1
      df$amp[df$amp >  1] <-  1
@@ -88,20 +108,20 @@ plot.gen.multi_sin <- function(df, xlim = c(0, 0.06), title = "", type = "l", dr
      
      delta = abs(xlim[2] - xlim[1])/10
      x_lim <- c(xlim[1] - delta, xlim[2] + delta)
-     lines(x_lim, c(0, 0), type = "l", lty = "solid", col = "black", lwd = 2)
+     lines(x_lim, c(0, 0), type = "l", lty = "solid", col = "black", lwd = 2 * g_lwd_scale)
      
      if (nrow(df) == 1) {
           fs <- df$fs[1]
           if (draw_period)
                for (i in (df$start[1]):(df$stop[1] * fs))
-                    lines(c(i / fs, i / fs), c(-1, 1), type = "l", lty = "dotted", col = "black", lwd = 2)
+                    lines(c(i / fs, i / fs), c(-1, 1), type = "l", lty = "dotted", col = "black", lwd = 2 * g_lwd_scale)
      }
      
      if (nrow(df) >= 1)
           for (i in 1:nrow(df)) {
                t <- seq(df$start[i] + df$shift[i], df$stop[i], df$dt[i])
                y <- df$amp[i]*sin(2*pi*df$fs[i]*t + df$phi[i])
-               lines(t, y, type = type, lty = df$lty[i], col = "black", lwd = df$lwd[i])
+               lines(t, y, type = type, lty = df$lty[i], col = "black", lwd = df$lwd[i] * g_lwd_scale)
           }
 }
 
@@ -121,20 +141,20 @@ plot.gen.prg <- function(df, xmax = max(df$fs) + 50, append_title = "", type = "
           title <- paste0(append_title, "sin(2pi*", df$fs[1], "Гц*t)")
      }
      
-     par(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5))
+     plot.set.par()
      
      plot(0, 0, type = "n", xlim = c(0, xmax), ylim = c(0, 1), main = title, xlab = "Частота, Гц", ylab = "Амплитуда")
      
      delta = xmax/10
      x_lim <- c(0 - delta, xmax + delta)
-     lines(x_lim, c(0, 0), type = "l", lty = "solid", col = "black", lwd = 2)
+     lines(x_lim, c(0, 0), type = "l", lty = "solid", col = "black", lwd = 2 * g_lwd_scale)
      
-     lines(c(0, 0), c(0, 1), type = "l", lty = "dotted", col = "black", lwd = 2)
-     lines(c(xmax, xmax), c(0, 1), type = "l", lty = "dotted", col = "black", lwd = 2)
+     lines(c(0, 0), c(0, 1), type = "l", lty = "dotted", col = "black", lwd = 2 * g_lwd_scale)
+     lines(c(xmax, xmax), c(0, 1), type = "l", lty = "dotted", col = "black", lwd = 2 * g_lwd_scale)
      
      if (nrow(df) >= 1)
           for (i in 1:nrow(df))
-               lines(c(df$fs[i], df$fs[i]), c(0, df$amp[i]), type = type, lty = "solid", col = "black", lwd = df$lwd[i])
+               lines(c(df$fs[i], df$fs[i]), c(0, df$amp[i]), type = type, lty = "solid", col = "black", lwd = df$lwd[i] * g_lwd_scale)
 }
 
 plot.gen.pws <- function(df, ymax = max(df$fs) + 50, xlim = c(0, 0.06), type = "l") {
@@ -146,15 +166,15 @@ plot.gen.pws <- function(df, ymax = max(df$fs) + 50, xlim = c(0, 0.06), type = "
      df$amp[df$amp < 0 | df$amp > 1] <- 1
      df$amp <- grey(1 - df$amp)
      
-     par(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5))
+     plot.set.par()
      
      plot(0, 0, type = "n", xlim = xlim, ylim = c(0, ymax), main = "Оконный спектр", xlab = "Врем\u44f, с", ylab = "Частота, Гц")
      
      delta = abs(xlim[2] - xlim[1])/10
      x_lim <- c(xlim[1] - delta, xlim[2] + delta)
-     lines(x_lim, c(0, 0), type = "l", lty = "solid", col = "black", lwd = 2)
+     lines(x_lim, c(0, 0), type = "l", lty = "solid", col = "black", lwd = 2 * g_lwd_scale)
      
      if (nrow(df) >= 1)
           for (i in 1:nrow(df))
-               lines(c(df$start[i], df$stop[i]), c(df$fs[i], df$fs[i]), type = type, lty = "solid", col = df$amp[i], lwd = 10)
+               lines(c(df$start[i], df$stop[i]), c(df$fs[i], df$fs[i]), type = type, lty = "solid", col = df$amp[i], lwd = 10 * g_lwd_scale)
 }

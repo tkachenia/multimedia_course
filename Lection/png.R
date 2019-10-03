@@ -1,11 +1,14 @@
 # install.packages("png")
+
+g_png_resolution <- c(1920, 1080)
+
 library("png")
-writePNG.open <- function(file_name, func, c_xy = c(1920, 1080), arg_list = list()) {
+writePNG.open <- function(file_name, func, c_xy = g_png_resolution, arg_list = list()) {
      subdir_exec("pic", impl.writePNG.open, file_name, func = func, c_xy = c_xy, arg_list = arg_list)
      NULL
 }
 
-impl.writePNG.open <- function(file_name, func, c_xy = c(1920, 1080), arg_list = list()) {
+impl.writePNG.open <- function(file_name, func, c_xy = g_png_resolution, arg_list = list()) {
      png(file_name, c_xy[1], c_xy[2])
      if (!is.null(func))
           do.call(func, arg_list)
@@ -32,12 +35,12 @@ impl.writePNG.close <- function(file_name, func, arg_list = list()) {
      dev.off()
 }
 
-writePNG <- function(file_name, func, c_xy = c(1920, 1080), arg_list = list()) {
+writePNG <- function(file_name, func, c_xy = g_png_resolution, arg_list = list()) {
      subdir_exec("pic", impl.writePNG, file_name, func = func, c_xy = c_xy, arg_list = arg_list)
      NULL
 }
 
-impl.writePNG <- function(file_name, func, c_xy = c(1920, 1080), arg_list = list()) {
+impl.writePNG <- function(file_name, func, c_xy = g_png_resolution, arg_list = list()) {
      png(file_name, c_xy[1], c_xy[2])
      if (!is.null(func))
           do.call(func, arg_list)
