@@ -50,7 +50,7 @@ lection6.make <- function() {
      writePNG.close("12.png", func = NULL)
      
      # АЦП
-     writePNG.open("13.png", func = plot.gen.sin, arg_list = list(100, dt = 0.002, title ="АЦП", type = "p", lwd = 2))
+     writePNG.open("13.png", func = plot.gen.sin, arg_list = list(100, dt = 0.002, title ="Квантование", type = "p", lwd = 2))
      for (i in 0:30) {
           writePNG.add("13.png", func = plot.lines, arg_list = list(c(i/(5*100), i/(5*100)), c(-2, 2)))
           writePNG.add("13.png", func = plot.lines, arg_list = list(c(-1, 1), c(-1 + (2/15)*i, -1 + (2/15)*i)))
@@ -65,7 +65,7 @@ lection6.make <- function() {
      px <- seq(0, 0.06, 0.002)
      py <- rep(-1 + c((2/15)* 7, (2/15)*15, (2/15)*12, (2/15)* 3, (2/15)* 0), length.out = 31)
      
-     writePNG.open("14.png", func = plot.gen.sin, arg_list = list(100, title ="АЦП", type = "n", lwd = 3))
+     writePNG.open("14.png", func = plot.gen.sin, arg_list = list(100, title ="Квантование", type = "n", lwd = 3))
      for (i in 0:30) {
           writePNG.add("14.png", func = plot.lines, arg_list = list(c(i/(5*100), i/(5*100)), c(-2, 2)))
           writePNG.add("14.png", func = plot.lines, arg_list = list(c(-1, 1), c(-1 + (2/15)*i, -1 + (2/15)*i)))
@@ -73,7 +73,7 @@ lection6.make <- function() {
      writePNG.add("14.png", func = plot.points, arg_list = list(px, py))
      writePNG.close("14.png", func = NULL)
      
-     writePNG.open("15.png", func = plot.gen.sin, arg_list = list(100, draw_pattern_sin = TRUE, title ="АЦП", type = "n", lwd = 3))
+     writePNG.open("15.png", func = plot.gen.sin, arg_list = list(100, draw_pattern_sin = TRUE, title ="АЦП", draw_ox = TRUE, type = "n", lwd = 3))
      for (i in 0:30) {
           writePNG.add("15.png", func = plot.lines, arg_list = list(c(i/(5*100), i/(5*100)), c(-2, 2)))
           writePNG.add("15.png", func = plot.lines, arg_list = list(c(-1, 1), c(-1 + (2/15)*i, -1 + (2/15)*i)))
