@@ -93,7 +93,7 @@ lection7.make <- function() {
    # lection7.test()
    
    c_xy <- c(1920, 750)
-   
+
    oscl <- data.frame.multi_sin(100, start = -1, stop = 1, amp = 0.9)
    writePNG("01.png", func = plot.gen.multi_sin, arg_list = list(oscl, title = "Осцилограмма", draw_period = TRUE))
    
@@ -104,16 +104,16 @@ lection7.make <- function() {
    writePNG("03.png", func = plot.gen.multi_sin, arg_list = list(oscl, draw_combined = TRUE, title = "Осцилограмма"))
    
    oscl <- data.frame.multi_sin(c(100, 150, 200), start = -1, stop = 1, amp = 0.3)
-   writePNG("03_alt.png", func = plot.gen.multi_sin, c_xy = c_xy, arg_list = list(oscl, draw_combined = TRUE, title = "Осцилограмма"))
+   writePNG("03_alt.png", func = plot.gen.multi_sin, c_xy = c(1920, 500), arg_list = list(oscl, draw_combined = TRUE, mai = c(1.25, 2.75, 1.25, 1.5)))
    
    oscl <- data.frame.multi_sin(100, start = -1, stop = 1, amp = 0.3)
-   writePNG("04.png", func = plot.gen.multi_sin, c_xy = c_xy, arg_list = list(oscl, ylim = c(-0.4, 0.4), draw_period = TRUE))
+   writePNG("04.png", func = plot.gen.multi_sin, c_xy = c(1920, 500), arg_list = list(oscl, ylim = c(-0.4, 0.4), draw_period = TRUE, mai = c(1.25, 2.75, 1.25, 1.5)))
    
    oscl <- data.frame.multi_sin(150, start = -1, stop = 1, amp = 0.3)
-   writePNG("05.png", func = plot.gen.multi_sin, c_xy = c_xy, arg_list = list(oscl, ylim = c(-0.4, 0.4), draw_period = TRUE))
+   writePNG("05.png", func = plot.gen.multi_sin, c_xy = c(1920, 500), arg_list = list(oscl, ylim = c(-0.4, 0.4), draw_period = TRUE, mai = c(1.25, 2.75, 1.25, 1.5)))
    
    oscl <- data.frame.multi_sin(200, start = -1, stop = 1, amp = 0.3)
-   writePNG("06.png", func = plot.gen.multi_sin, c_xy = c_xy, arg_list = list(oscl, ylim = c(-0.4, 0.4),draw_period = TRUE))
+   writePNG("06.png", func = plot.gen.multi_sin, c_xy = c(1920, 500), arg_list = list(oscl, ylim = c(-0.4, 0.4),draw_period = TRUE, mai = c(1.25, 2.75, 1.25, 1.5)))
    
    for (i in 0:2) {
         oscl <- data.frame.multi_sin(100 + 50 * i, start = -1, stop = 1)
@@ -122,7 +122,7 @@ lection7.make <- function() {
         
         spm <- data.frame.prg(100 + 50 * i)
         name <- paste0("0", 7 + 2*i + 1)
-        writePNG(paste0(substr(name, nchar(name) - 1, nchar(name)), ".png"), func = plot.gen.prg, c_xy = c_xy, arg_list = list(spm, title = "Спектр"))
+        writePNG(paste0(substr(name, nchar(name) - 1, nchar(name)), ".png"), func = plot.gen.prg, c_xy = c_xy, arg_list = list(spm, xmax = 250, title = "Спектр"))
    }
    
    oscl <- data.frame.multi_sin(100, start = -1, stop = 1, amp = 0.3)
@@ -201,12 +201,12 @@ lection7.make <- function() {
    oscl$amp   <- c( 0.3,  0.9,  0.6)
    writePNG("31.png", func = plot.gen.multi_sin, arg_list = list(oscl, xlim = c(0, 0.08), title = "Осцилограмма"))
    
-   writePNG.open("32_1.png", func = plot.gen.multi_sin, arg_list = list(oscl, xlim = c(0, 0.08), title = "Осцилограмма"))
+   writePNG.open("32_1.png", func = plot.gen.multi_sin, c_xy = c_xy, arg_list = list(oscl, xlim = c(0, 0.08), title = "Осцилограмма"))
    for (i in 0:2)
       writePNG.add("32_1.png", func = plot.lines, arg_list = list(0.04 * i *c(1, 1), c(-2, 2)))
    writePNG.close("32_1.png", func = NULL)
    
-   writePNG.open("32_2.png", func = plot.gen.multi_sin, arg_list = list(oscl, xlim = c(0, 0.08), title = "Осцилограмма"))
+   writePNG.open("32_2.png", func = plot.gen.multi_sin, c_xy = c_xy, arg_list = list(oscl, xlim = c(0, 0.08), title = "Осцилограмма"))
    for (i in 0:4)
       writePNG.add("32_2.png", func = plot.lines, arg_list = list(0.02 * i *c(1, 1), c(-2, 2)))
    writePNG.close("32_2.png", func = NULL)
@@ -218,16 +218,16 @@ lection7.make <- function() {
    wspm$damp  <- c(   0,  0.35)
    wspm$pow   <- c(   1,  2)
    wspm$duty  <- c(   1,  15)
-   writePNG("33_1.png", func = plot.gen.pws, arg_list = list(wspm, xlim = c(0, 0.08)))
+   writePNG("33_1.png", func = plot.gen.pws, c_xy = c_xy, arg_list = list(wspm, xlim = c(0, 0.08)))
    
    wspm <- data.frame.pws(c( 25, 150, 200))
    wspm$start <- c(0.00, 0.04, 0.06)
    wspm$stop  <- c(0.04, 0.06, 0.08)
    wspm$amp   <- c( 0.3,  0.9, 0.6)
-   wspm$damp  <- c(0.25,    0,   0)
+   wspm$damp  <- c( 0.35,    0,   0)
    wspm$pow   <- c(   3,    1,   1)
-   wspm$duty  <- c(  10,    1,   1)
-   writePNG("33_2.png", func = plot.gen.pws, arg_list = list(wspm, xlim = c(0, 0.08)))
+   wspm$duty  <- c(  15,    1,   1)
+   writePNG("33_2.png", func = plot.gen.pws, c_xy = c_xy, arg_list = list(wspm, xlim = c(0, 0.08)))
    
    t  <- seq(-1, 1, 0.0001)
    fs <- c(25, 100, 200)
@@ -260,19 +260,23 @@ lection7.make <- function() {
       }
    }
    
-   writePNG.open("40.png", func = plot.gen.multi_sin, arg_list = list(oscl, xlim = c(0, 0.08), title = "Осцилограмма"))
+   oscl <- data.frame.multi_sin(c( 25,  150,  200))
+   oscl$start <- c(0.00, 0.04, 0.06)
+   oscl$stop  <- c(0.04, 0.06, 0.08)
+   oscl$amp   <- c( 0.3,  0.9,  0.6)
+   writePNG.open("40.png", func = plot.gen.multi_sin, c_xy = c_xy, arg_list = list(oscl, xlim = c(0, 0.08), title = "Осцилограмма"))
    writePNG.add("40", func = plot.lines, arg_list = list(c(0, 0), c(-2, 2)))
    writePNG.add("40", func = plot.lines, arg_list = list(c(0.04, 0.04), c(-2, 2)))
    writePNG.add("40", func = plot.lines, arg_list = list(c(0.06, 0.06), c(-2, 2)))
    writePNG.add("40", func = plot.lines, arg_list = list(c(0.08, 0.08), c(-2, 2)))
    writePNG.close("40", func = NULL)
 
-   wspm <- data.frame.pws(c( 25, 150, 200), damp = 0.5, duty = 10)
+   wspm <- data.frame.pws(c( 25, 150, 200), damp = 0.5, duty = 7, lwd = 5)
    wspm$start <- c(0.00, 0.04, 0.06)
    wspm$stop  <- c(0.04, 0.06, 0.08)
    wspm$amp   <- c( 0.3,  0.9, 0.6)
    wspm$pow   <- c(   3,  0.5, 1.5)
-   writePNG("41.png", func = plot.gen.pws, arg_list = list(wspm, xlim = c(0, 0.08)))
+   writePNG("41.png", func = plot.gen.pws, c_xy = c_xy, arg_list = list(wspm, xlim = c(0, 0.08)))
    
    spm <- data.frame.prg(c(51, 100), damp = 0.0275, amp = 0.9, lwd = 2)
    spm$pow <- c(1/4, 1/2)
