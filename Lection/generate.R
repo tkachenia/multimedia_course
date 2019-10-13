@@ -4,30 +4,30 @@ plot.set.par <- function(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1
      par(cex = cex, cex.axis = cex.axis, cex.lab = cex.lab, cex.main = cex.main, cex.sub = cex.sub, mai = mai)
 }
 
-plot.points <- function(x, y = NULL, type = "p", pch = 0, lwd = 2) {
+plot.points <- function(x, y = NULL, type = "p", pch = 0, lwd = 2, mai = c(2.75, 2.75, 2.5, 1.5)) {
    #wrapper for built in function points
-   plot.set.par()
+   plot.set.par(mai = mai)
    
    points(x = x , y = y, type = type, pch = pch, lwd = lwd * g_lwd_scale)
 }
 
-plot.lines <- function(x, y = NULL, type = "l", lty = "dotted", col = "black", lwd = 1) {
+plot.lines <- function(x, y = NULL, type = "l", lty = "dotted", col = "black", lwd = 1, mai = c(2.75, 2.75, 2.5, 1.5)) {
    #wrapper for built in function lines
-   plot.set.par()
+   plot.set.par(mai = mai)
    
    lines(x = x , y = y, type = type, lty = lty, col = col, lwd = lwd * g_lwd_scale)
 }
 
-plot.gen.const <- function(amp = 1, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, type = "l", lty = "solid", lwd = 3) {
+plot.gen.const <- function(amp = 1, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, type = "l", lty = "solid", lwd = 3, mai = c(2.75, 2.75, 2.5, 1.5)) {
      # amp - amplitude of sin [0, 1]
-     plot.set.par()
+     plot.set.par(mai = mai)
      
      plot(c(-1, 1), c(amp, amp), xlim = xlim, ylim = ylim, type = type, lty = lty, main = "Посто\u44fнное значение", xlab = "Врем\u44f, с", ylab = "Амплитуда", col = "black", lwd = lwd * g_lwd_scale, las = 1)
      if (draw_ox)
           lines(c(-1, 1), c(0, 0), type = "l", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
 }
 
-plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, fs_print = fs, type = "l", lty = "solid", lwd = 3) {
+plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, fs_print = fs, type = "l", lty = "solid", lwd = 3, mai = c(2.75, 2.75, 2.5, 1.5)) {
      # fs - frequency sample rate (Hz)  (the ordinary frequency, the number of oscillations (cycles) that occur each second of time)
      # amp - amplitude of sin [0, 1]
      # dt - discrete time period (sec)
@@ -35,7 +35,7 @@ plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, xlim = c(0,
      # shift - shift horizontally plot (sec)
      # ...
      # fs_print - printed frequency sample rate (Hz)
-     plot.set.par()
+     plot.set.par(mai = mai)
      
      t <- seq(-1 + shift, 1, dt)
      y <- amp*sign(sin(2*pi*fs*t))
@@ -52,7 +52,7 @@ plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, xlim = c(0,
                lines(c(i/fs, i/fs), c(-2, 2), type = "l", lty = "dotted", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
 }
 
-plot.gen.sin <- function(fs, amp = 1, dt = 1/(1000*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, title = "", fs_print = fs, type = "l", lty = "solid", lwd = 3) {
+plot.gen.sin <- function(fs, amp = 1, dt = 1/(1000*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, title = "", fs_print = fs, type = "l", lty = "solid", lwd = 3, mai = c(2.75, 2.75, 2.5, 1.5)) {
      # fs - frequency sample rate (Hz)  (the ordinary frequency, the number of oscillations (cycles) that occur each second of time)
      # amp - amplitude of sin [0, 1]
      # dt - discrete time period (sec)
@@ -60,7 +60,7 @@ plot.gen.sin <- function(fs, amp = 1, dt = 1/(1000*fs), shift = 0, xlim = c(0, 0
      # shift - shift horizontally plot (sec)
      # ...
      # fs_print - printed frequency sample rate (Hz)
-     plot.set.par()
+     plot.set.par(mai = mai)
      
      t <- seq(-1 + shift, 1, dt)
      y <- amp*sin(2*pi*fs*t)
@@ -105,8 +105,8 @@ data.frame.multi_sin <- function(fs, start = 0.0, stop = 0.06, dt = 1/(1000*fs),
      df
 }
 
-plot.gen.multi_sin <- function(df, draw_combined = FALSE, xlim = c(0, 0.06), ylim = c(-1, 1), title = "", type = "l", draw_period = FALSE) {
-     plot.set.par()
+plot.gen.multi_sin <- function(df, draw_combined = FALSE, xlim = c(0, 0.06), ylim = c(-1, 1), title = "", type = "l", draw_period = FALSE, mai = c(2.75, 2.75, 2.5, 1.5)) {
+     plot.set.par(mai = mai)
      
      df$amp[df$amp < -1] <- -1
      df$amp[df$amp >  1] <-  1
@@ -205,7 +205,7 @@ data.frame.prg.preproc <- function(df) {
      df_ret
 }
 
-plot.gen.prg <- function(df, xmax = max(df$fs) + 50, title = "", type = "l") {
+plot.gen.prg <- function(df, xmax = max(df$fs) + 50, title = "", type = "l", mai = c(2.75, 2.75, 2.5, 1.5)) {
      df <- data.frame.prg.preproc(df)
 
      df$amp[df$amp < 0 | df$amp > 1] <- 1
@@ -218,7 +218,7 @@ plot.gen.prg <- function(df, xmax = max(df$fs) + 50, title = "", type = "l") {
           title <- paste0(title, "sin(2pi*", df$fs[1], "Гц*t)")
      }
      
-     plot.set.par()
+     plot.set.par(mai = mai)
      
      plot(0, 0, type = "n", xlim = c(0, xmax), ylim = c(0, 1), main = title, xlab = "Частота, Гц", ylab = "Амплитуда")
      
@@ -282,15 +282,15 @@ data.frame.pws.preproc <- function(df) {
      df_ret
 }
 
-plot.gen.pws <- function(df, ymax = max(df$fs) + 50, xlim = c(0, 0.06), type = "l") {
+plot.gen.pws <- function(df, ymax = max(df$fs) + 50, xlim = c(0, 0.06), type = "l", mai = c(2.75, 2.75, 2.5, 1.5)) {
      df <- data.frame.pws.preproc(df)
 
      df$amp[df$amp < 0 | df$amp > 1] <- 1
      df$amp <- grey(1 - df$amp)
      
-     plot.set.par()
+     plot.set.par(mai = mai)
      
-     plot(0, 0, type = "n", xlim = xlim, ylim = c(0, ymax), main = "Оконный спектр", xlab = "Врем\u44f, с", ylab = "Частота, Гц")
+     plot(0, 0, type = "n", xlim = xlim, ylim = c(0, ymax), main = "Спектрограмма", xlab = "Врем\u44f, с", ylab = "Частота, Гц")
      
      delta = abs(xlim[2] - xlim[1])/10
      x_lim <- c(xlim[1] - delta, xlim[2] + delta)
