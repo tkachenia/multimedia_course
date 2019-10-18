@@ -1,24 +1,25 @@
 g_lwd_scale <- 1.5
+g_mai <- c(2.75, 2.75, 2.5, 1.5)
 
-plot.set.par <- function(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.set.par <- function(cex = 3.0, cex.axis = 1.0, cex.lab = 1.25, cex.main = 1.75, cex.sub = 0.75, mai = g_mai) {
      par(cex = cex, cex.axis = cex.axis, cex.lab = cex.lab, cex.main = cex.main, cex.sub = cex.sub, mai = mai)
 }
 
-plot.points <- function(x, y = NULL, type = "p", pch = 0, lwd = 2, mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.points <- function(x, y = NULL, type = "p", pch = 0, lwd = 2, mai = g_mai) {
    #wrapper for built in function points
    plot.set.par(mai = mai)
    
    points(x = x , y = y, type = type, pch = pch, lwd = lwd * g_lwd_scale)
 }
 
-plot.lines <- function(x, y = NULL, type = "l", lty = "dotted", col = "black", lwd = 1, mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.lines <- function(x, y = NULL, type = "l", lty = "dotted", col = "black", lwd = 1, mai = g_mai) {
    #wrapper for built in function lines
    plot.set.par(mai = mai)
    
    lines(x = x , y = y, type = type, lty = lty, col = col, lwd = lwd * g_lwd_scale)
 }
 
-plot.gen.const <- function(amp = 1, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, type = "l", lty = "solid", lwd = 3, mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.gen.const <- function(amp = 1, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, type = "l", lty = "solid", lwd = 3, mai = g_mai) {
      # amp - amplitude of sin [0, 1]
      plot.set.par(mai = mai)
      
@@ -27,7 +28,7 @@ plot.gen.const <- function(amp = 1, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox 
           lines(c(-1, 1), c(0, 0), type = "l", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
 }
 
-plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, fs_print = fs, type = "l", lty = "solid", lwd = 3, mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, fs_print = fs, type = "l", lty = "solid", lwd = 3, mai = g_mai) {
      # fs - frequency sample rate (Hz)  (the ordinary frequency, the number of oscillations (cycles) that occur each second of time)
      # amp - amplitude of sin [0, 1]
      # dt - discrete time period (sec)
@@ -52,7 +53,7 @@ plot.gen.square <- function(fs, amp = 1, dt = 1/(100*fs), shift = 0, xlim = c(0,
                lines(c(i/fs, i/fs), c(-2, 2), type = "l", lty = "dotted", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
 }
 
-plot.gen.sin <- function(fs, amp = 1, dt = 1/(1000*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, title = "", fs_print = fs, type = "l", lty = "solid", lwd = 3, mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.gen.sin <- function(fs, amp = 1, dt = 1/(1000*fs), shift = 0, xlim = c(0, 0.06), ylim = c(-1, 1), draw_ox = FALSE, draw_pattern_sin = FALSE, draw_period = FALSE, title = "", fs_print = fs, type = "l", lty = "solid", lwd = 3, mai = g_mai) {
      # fs - frequency sample rate (Hz)  (the ordinary frequency, the number of oscillations (cycles) that occur each second of time)
      # amp - amplitude of sin [0, 1]
      # dt - discrete time period (sec)
@@ -105,7 +106,7 @@ data.frame.multi_sin <- function(fs, start = 0.0, stop = 0.06, dt = 1/(1000*fs),
      df
 }
 
-plot.gen.multi_sin <- function(df, draw_combined = FALSE, xlim = c(0, 0.06), ylim = c(-1, 1), title = "", type = "l", draw_period = FALSE, mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.gen.multi_sin <- function(df, draw_combined = FALSE, xlim = c(0, 0.06), ylim = c(-1, 1), title = "", type = "l", draw_period = FALSE, mai = g_mai) {
      plot.set.par(mai = mai)
      
      df$amp[df$amp < -1] <- -1
@@ -205,7 +206,7 @@ data.frame.prg.preproc <- function(df) {
      df_ret
 }
 
-plot.gen.prg <- function(df, xmax = max(df$fs) + 50, title = "", type = "l", mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.gen.prg <- function(df, xmax = max(df$fs) + 50, title = "", type = "l", mai = g_mai) {
      df <- data.frame.prg.preproc(df)
 
      df$amp[df$amp < 0 | df$amp > 1] <- 1
@@ -282,7 +283,7 @@ data.frame.pws.preproc <- function(df) {
      df_ret
 }
 
-plot.gen.pws <- function(df, ymax = max(df$fs) + 50, xlim = c(0, 0.06), type = "l", mai = c(2.75, 2.75, 2.5, 1.5)) {
+plot.gen.pws <- function(df, ymax = max(df$fs) + 50, xlim = c(0, 0.06), type = "l", mai = g_mai) {
      df <- data.frame.pws.preproc(df)
 
      df$amp[df$amp < 0 | df$amp > 1] <- 1
