@@ -29,7 +29,7 @@ lection8.test <- function() {
    
    #Periodogram
    data <- get.osg("01_16.wav")
-   prg <- get.prg(data, width = 32768, overlap = -(data@samp.rate - 32768), spec_below = -80)
+   prg <- get.prg(data, width = 32768, overlap = -(data@samp.rate - 32768))
    for (i in 1:length(prg@spec)) {
       name <- paste0("0", i)
       writePNG(paste0("test_06_", substr(name, nchar(name) - 1, nchar(name)), ".png"), func = plot.prg, arg_list = list(prg, which = i, ylim = c(-120, 0), log = "x"))
@@ -38,18 +38,24 @@ lection8.test <- function() {
    writePNG(paste0("test_07_2.png"), func = plot.prg, arg_list = list(prg, which = 1, ylim = c(-120, 0), log = "x"))
    
    wav <- get.osg("DOOM.wav")
-   prg <- get.prg(wav, width = 4096, overlap = 1024, spec_below = -80)
+   prg <- get.prg(wav, width = 4096, overlap = 1024)
    writePNG("test_08_1.png", func = plot.prg, arg_list = list(prg, which = 45))
    writePNG("test_08_2.png", func = plot.prg, arg_list = list(prg, which = 45, log = "x"))
 
    #Spectre
    wav <- get.osg("DOOM.wav")
    
-   pws <- get.pws(wav, fs_band = 8000)
-   writePNG("test_09_1.png", func = plot.pws, arg_list = list(pws, wav@samp.rate))
+   pws <- get.pws(wav, fs_band = 8000, norm_spec = TRUE)
+   writePNG("test_09_1.png", func = plot.pws, arg_list = list(pws))
    
-   pws <- get.pws(wav)
-   writePNG("test_09_2.png", func = plot.pws, arg_list = list(pws, wav@samp.rate))
+   pws <- get.pws(wav, fs_band = 8000, norm_spec = FALSE)
+   writePNG("test_09_2.png", func = plot.pws, arg_list = list(pws))
+
+   pws <- get.pws(wav, fs_band = 8000, norm_spec = FALSE)
+   writePNG("test_09_3.png", func = plot.pws, arg_list = list(pws, log = TRUE))
+   
+   pws <- get.pws(wav, clip_dB = list(flag = TRUE, spec_below = -150, spec_above = -65))
+   writePNG("test_09_4.png", func = plot.pws, arg_list = list(pws))
    
    NULL
 }

@@ -153,37 +153,40 @@ plot.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples"), tit
      }
 }
 
-get.prg <- function(data, width = length(data), overlap = 0, postproc = TRUE, spec_below = -40, spec_above = -3) {
+get.prg <- function(data, width = length(data), overlap = 0, norm_spec = TRUE, log_dB = TRUE, clip_dB = list(flag = FALSE, spec_below = -40, spec_above = -3)) {
      prg <- periodogram(data, width = width, overlap = overlap)
      
-     if (postproc) {
-          prg <- data.prg(prg, spec_below = spec_below, spec_above = spec_above)
+     if (norm_spec) {
+          max <- sapply(prg@spec, max)
+          max <- max(max)
+          prg@spec <- lapply(prg@spec, sapply, data.prg.normalize, max)
+     }
+     
+     if (log_dB) {
+          prg@spec <- lapply(prg@spec, sapply, data.prg.log_dB)
+     }
+     
+     if (clip_dB$flag) {
+          prg@spec <- lapply(prg@spec, sapply, data.prg.clip_dB, clip_dB$spec_below, clip_dB$spec_aboev)
      }
      
      prg
 }
 
-data.prg.normalize_spec <- function(spec, max = 1, spec_below = -40, spec_above = -3) {
+data.prg.normalize <- function(spec, max = 1) {
      spec <- spec/max # normalize magnitude so that max is 0 dB.
-     spec[spec < 10^(spec_below/10)] <- 10^(spec_below/10) # clip below -40 dB.
-     spec[spec > 10^(spec_above/10)] <- 10^(spec_above/10) # clip above -3 dB.
-     
      spec
 }
 
-data.prg.logarithmic_spec <- function(spec) {
+data.prg.log_dB <- function(spec) {
      spec <- 20*log10(spec)
-     
      spec
 }
 
-data.prg <- function(prg, spec_below = -40, spec_above = -3) {
-     max <- sapply(prg@spec, max)
-     max <- max(max)
-     prg@spec <- lapply(prg@spec, sapply, data.prg.normalize_spec, max, spec_below, spec_above)
-     prg@spec <- lapply(prg@spec, sapply, data.prg.logarithmic_spec)
-
-     prg
+data.prg.clip_dB <- function(spec, spec_below = -40, spec_above = -3) {
+     spec[spec < spec_below] <- spec_below # clip below -40 dB.
+     spec[spec > spec_above] <- spec_above # clip above -3 dB.
+     spec
 }
 
 plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill = TRUE, xlab = "Частота, Гц", ylab = "Амплитуда, дБ", mai = c(2.75, 2.75, 2.5, 1.5), ...) {
@@ -215,31 +218,65 @@ plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill =
      }
 }
 
-get.pws <- function(osg, wintime = 0.025, steptime = 0.01, fs_band = osg@samp.rate/2, postproc = TRUE, spec_below = -40, spec_above = -3) {
+get.pws <- function(osg, wintime = 0.025, steptime = 0.01, fs_band = osg@samp.rate/2, norm_spec = TRUE, log_dB = TRUE, clip_dB = list(flag = FALSE, spec_below = -40, spec_above = -3)) {
      data <- data.osg.to_mono(osg)
-     data <- data.osg.normalize(data)
+     # data <- data.osg.normalize(data)
    
      pws <- powspec(data, osg@samp.rate, wintime = wintime, steptime = steptime)
+     print(max(pws))
      
      pws <- abs(pws[2:(nrow(pws)*fs_band/(osg@samp.rate/2)),]) # magnitude in range (0; fs_band] Hz.
      
-     if (postproc) {
-          pws <- data.prg.normalize_spec(pws, max(pws), spec_below, spec_above)
-          pws <- data.prg.logarithmic_spec(pws)
+     if (norm_spec) {
+          print("norm")
+          pws <- data.prg.normalize(pws, max(pws))
+     }
+     
+     if (log_dB) {
+          pws <- data.prg.log_dB(pws)
+     }
+     
+     if (clip_dB$flag) {
+          pws <- data.prg.clip_dB(pws, clip_dB$spec_below, clip_dB$spec_above)
      }
 
      list(pws = pws, fs_band = fs_band, steptime = steptime)
 }
 
-plot.pws <- function(pws, xlab = "Врем\u44f, секунды", ylab = "Частота, Гц", mai = c(2.75, 2.75, 2.5, 1.5), ...) {
+plot.pws <- function(pws, xlab = "Врем\u44f, секунды", ylab = "Частота, Гц", log = FALSE, mai = c(2.75, 2.75, 2.5, 1.5), ...) {
      plot.set.par(mai = mai)
+   
      duration <- ncol(pws$pws) * pws$steptime
-
+     delta_t <- floor(duration/10)
+     at_1 <- c(seq(0, 1, delta_t/duration), 1)
+     labels_1 <- c(round(seq(0, duration, delta_t), digits = 0), "")
+     
+     at_2 <- seq(0, 1, 0.1)
+     labels_2 <- seq(0, pws$fs_band, pws$fs_band/10)
+     if (log) {
+        delta_fs <- pws$fs_band / nrow(pws$pws)
+        mtx <- matrix(-200.0, nrow = 100 * log10(pws$fs_band), ncol = ncol(pws$pws))
+        fs_start <- 1
+        fs_end <- NA
+        for(i in 1:nrow(pws$pws)) {
+           fs <- delta_fs * i
+           fs_end <- floor(100*log10(fs))
+           fs_start <- min(fs_start, fs_end)
+           mtx[fs_start:fs_end,] <- apply(matrix(mtx[fs_start:fs_end,], ncol = ncol(pws$pws), byrow=TRUE), 1, pmax, pws$pws[i,])
+           fs_start <- fs_end + 1
+        }
+        pws$pws <- mtx
+        log_scale <- log10(pws$fs_band)
+        labels_2 <- seq(0, log_scale, log_scale/10)
+        labels_2 <- round(10^labels_2, digits = 0)
+        labels_2[1] <- 0
+     }
+     
+     print(max(pws$pws))
+     
      image(x = t(pws$pws), col = gray(0:255 / 255), axes = FALSE, xlab = xlab, ylab = NA, ...)
      mtext(ylab, side = 4, line = 1, cex = g_cex * g_cex.lab)
 
-     axis(side = 2, at = seq(0, 1, 0.1), labels = seq(0, pws$fs_band, pws$fs_band/10), las = 1)
-     
-     labels = round(seq(0, duration, duration/10), digits = 1)
-     axis(side = 1, at = seq(0, 1, 0.1), labels = labels)
+     axis(side = 1, at = at_1, labels = labels_1) # time
+     axis(side = 2, at = at_2, labels = labels_2, las = 1) # frequency
 }
