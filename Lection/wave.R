@@ -130,9 +130,13 @@ time.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples")) {
      t
 }
 
-plot.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples"), title = "", xlab = "Врем\u44f", ylab = "Амплитуда", type = "h", draw_ox = TRUE, mai = g_mai) {
+plot.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples"), title = "", xlab = "Врем\u44f", ylab = "Амплитуда", type = "h", draw_ox = TRUE, lwd = 1, mai = g_mai, ...) {
      plot.set.par(mai = mai)
      
+     if (length(osg@left) / osg@samp.rate < 2.5) {
+          x_resolution <- NULL
+          type = "l"
+     }
      y <- data.osg(osg, x_resolution)
      t <- time.osg(osg, x_resolution, xunit)
      
@@ -142,14 +146,14 @@ plot.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples"), tit
           xlab <- paste0(xlab, ", секунды")
      }
      
-     plot(t, y, ylim = c(-1, 1), main = title, xlab = xlab, ylab = ylab, type = type, lty = "solid", col = "black", lwd = 1, las = 1)
+     plot(t, y, ylim = c(-1, 1), main = title, xlab = xlab, ylab = ylab, type = type, lty = "solid", col = "black", lwd = (if (lwd == 1) 1 else lwd * g_lwd_scale), las = 1, ...)
      
      if (draw_ox) {
           t_head <- head(t, n = 1)
           t_tail <- tail(t, n = 1)
           space <- 0.1*(t_tail - t_head)
           
-          lines(c(t_head - space, t_tail + space), c(0, 0), type = "l", lty = "solid", col = "black", lwd = 1*g_lwd_scale)
+          lines(c(t_head - space, t_tail + space), c(0, 0), type = "l", lty = "solid", col = "black", lwd = max(1, lwd - 3) * g_lwd_scale)
      }
 }
 
@@ -189,7 +193,7 @@ get.prg <- function(osg, width = length(osg), overlap = 0, postproc = list(log =
      prg
 }
 
-plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill = TRUE, xlab = "Частота, Гц", ylab = "Амплитуда, дБ", mai = c(2.75, 2.75, 2.5, 1.5), ...) {
+plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill = TRUE, title = "", xlab = "Частота, Гц", ylab = "Амплитуда, дБ", mai = c(2.75, 2.75, 2.5, 1.5), ...) {
      plot.set.par(mai = mai)
      
      if (which <= 0) {
@@ -202,7 +206,7 @@ plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill =
           which <- 1
      }
      
-     plot(x = prg@freq, y = prg@spec[[which]], ylim = ylim, type = "l", lty = "solid", col = "black", xlab = xlab, ylab = ylab, ...)
+     plot(x = prg@freq, y = prg@spec[[which]], ylim = ylim, type = "l", lty = "solid", col = "black", main = title, xlab = xlab, ylab = ylab, ...)
      
      # ylab on the right side
      # args <- c(list(x = substitute(prg@freq), y = substitute(prg@spec[[which]]), ylim = ylim, type = "l", lty = "solid", col = "black", xlab = xlab, ylab = NA), list(...))
@@ -241,7 +245,7 @@ get.pws <- function(osg, wintime = 0.025, steptime = 0.01, fs_band = osg@samp.ra
      list(pws = pws, fs_band = fs_band, steptime = steptime)
 }
 
-plot.pws <- function(pws, xlab = "Врем\u44f, секунды", ylab = "Частота, Гц", log = FALSE, mai = c(2.75, 2.75, 2.5, 1.5), ...) {
+plot.pws <- function(pws, title = "", xlab = "Врем\u44f, секунды", ylab = "Частота, Гц", log = FALSE, mai = c(2.75, 2.75, 2.5, 1.5), ...) {
      plot.set.par(mai = mai)
    
      duration <- ncol(pws$pws) * pws$steptime
@@ -283,7 +287,7 @@ plot.pws <- function(pws, xlab = "Врем\u44f, секунды", ylab = "Час
         labels_2[1] <- 0
      }
      
-     image(x = t(pws$pws), col = gray(0:255 / 255), axes = FALSE, xlab = xlab, ylab = NA, ...)
+     image(x = t(pws$pws), col = gray(0:255 / 255), axes = FALSE, main = title, xlab = xlab, ylab = NA, ...)
      mtext(ylab, side = 4, line = 1, cex = g_cex * g_cex.lab)
 
      axis(side = 1, at = at_1, labels = labels_1) # time

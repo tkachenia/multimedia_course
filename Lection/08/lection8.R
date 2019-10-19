@@ -68,34 +68,29 @@ lection8.make <- function() {
      # Pentogram spectre
      # full
      data1 <- get.osg("DOOM.wav")
-     writePNG("!_1.png", func = plot.osg, arg_list = list(data1, main = "Осцилограма"))
-     pws1 <- get.pws(data1, 0.025, 0.005, fs_band = 17500, spec_below = -60)
-     writePNG("!_2.png", func = plot.pws, arg_list = list(pws1, main = "Спектр"))
+     writePNG("01.png", func = plot.osg, arg_list = list(data1, title = "Осцилограма"))
+     pws1 <- get.pws(data1, 0.025, 0.005, fs_band = 17500, postproc = list(log = TRUE, norm = TRUE, clip = TRUE, min_db = -150, max_db = -65))
+     writePNG("02.png", func = plot.pws, arg_list = list(pws1, title = "Спектрограмма"))
      # part
      data2 <- get.osg("DOOM.wav", from = 15.5, to = 17.5, units = "seconds")
-     writePNG("!_3.png", func = plot.osg, arg_list = list(data2, main = "Осцилограма"))
-     pws2 <- get.pws(data2, 0.025, 0.005, fs_band = 17500, spec_below = -60)
-     pws2[pws2 <= -100] <- -500
-     pws2[pws2 > -100 && pws2 <= -65] <- 0
-     pws2[pws2 > -65] <- -500
-     plot.pws(pws2)
-     writePNG("!_4.png", func = plot.pws, arg_list = list(pws2, main = "Спектр"))
+     writePNG("03.png", func = plot.osg, arg_list = list(data2, title = "Осцилограма"))
+     pws2 <- get.pws(data2, 0.025, 0.005, fs_band = 17500, postproc = list(log = TRUE, norm = TRUE, clip = TRUE, min_db = -150, max_db = -65))
+     writePNG("04.png", func = plot.pws, arg_list = list(pws2, title = "Спектрограмма"))
      # Pentogram spectre
      
      # Referenced wav
      # full oscilogram
-     data3 <- get.osg("01_16.wav")
-     writePNG("!_5.png", func = plot.osg, arg_list = list(data3, main = "Осцилограма"))
+     data <- get.osg("01_16.wav")
+     writePNG("05.png", func = plot.osg, arg_list = list(data, title = "Осцилограма"))
      
      for (i in 0:5) {
           # part oscilogram
-          data4 <- get.osg("01_16.wav", from = 2*i, to = 2*i + 0.02, units = "seconds")
-          writePNG(paste0("!_", sprintf("%d", 6 + i), "-osg.png"), func = plot.osg, arg_list = list(data4, main = "Осцилограма", draw_ox = F))
+          data <- get.osg("01_16.wav", from = 2*i, to = 2*i + 0.02, units = "seconds")
+          writePNG(paste0(sprintf("%02d", 6 + i), "_osg.png"), func = plot.osg, arg_list = list(data, title = "Осцилограма", lwd = (if (i < 3) 2 else 1), draw_ox = FALSE))
           # part spectre
-          data5 <- get.osg("01_16.wav", from = 2*i, to = 2*i + 1, units = "seconds")
-          prg1 <- get.prg(data5, width = 32768, overlap = -(data5@samp.rate - 32768), spec_below = -80)
-          writePNG.open(paste0("!_", sprintf("%d", 6 + i), "-prg.png"), func = plot.prg, arg_list = list(prg1, which = 1, ylim = c(-120, 0), log = "x"))
-          writePNG.close(func = plot.prg, arg_list = list(prg1, which = 1, ylim = c(-120, 0), log = "x", type = "l", main = "Периодограмма"))
+          data <- get.osg("01_16.wav", from = 2*i, to = 2*i + 1, units = "seconds")
+          prg <- get.prg(data, width = 32768, overlap = -(data@samp.rate - 32768))
+          writePNG(paste0(sprintf("%02d", 6 + i), "_prg.png"), func = plot.prg, arg_list = list(prg, which = 1, ylim = c(-120, 0), log = "x", title = "Спектр"))
      }
      # Referenced wav
      
@@ -191,4 +186,4 @@ lection8.make <- function() {
      close(file)
 }
 
-lection6.make()
+lection8.make()
