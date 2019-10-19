@@ -78,7 +78,7 @@ data.osg.to_mono <- function(data) {
      mono_data
 }
 
-data.osg.normalize <- function(data) {
+data.osg.norm <- function(data) {
      maximum <- max(abs(range(data)))
      norm_data <- data / maximum
      
@@ -103,7 +103,7 @@ data.osg.ranged <- function(data, x_resolution = NULL) {
 
 data.osg <- function(osg, x_resolution = NULL) {
      mono_osg <- data.osg.to_mono(osg)
-     norm_osg <- data.osg.normalize(mono_osg)
+     norm_osg <- data.osg.norm(mono_osg)
      ranged_osg <- data.osg.ranged(norm_osg, x_resolution)
 
      ranged_osg
@@ -153,40 +153,40 @@ plot.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples"), tit
      }
 }
 
-get.prg <- function(data, width = length(data), overlap = 0, norm_spec = TRUE, log_dB = TRUE, clip_dB = list(flag = FALSE, spec_below = -40, spec_above = -3)) {
-     prg <- periodogram(data, width = width, overlap = overlap)
+data.prg.log <- function(spec) {
+   spec <- 20*log10(spec)
+   spec
+}
+
+data.prg.norm <- function(spec, max = 1) {
+   spec <- spec/max # normalize magnitude so that max is 0 dB.
+   spec
+}
+
+data.prg.clip_dB <- function(spec, min_db = -40, max_db = -3) {
+   spec[spec < min_db] <- min_db # clip below -40 dB.
+   spec[spec > max_db] <- max_db # clip above -3 dB.
+   spec
+}
+
+get.prg <- function(osg, width = length(osg), overlap = 0, postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -40, max_db = -3)) {
+     prg <- periodogram(osg, width = width, overlap = overlap)
      
-     if (norm_spec) {
-          max <- sapply(prg@spec, max)
-          max <- max(max)
-          prg@spec <- lapply(prg@spec, sapply, data.prg.normalize, max)
-     }
-     
-     if (log_dB) {
-          prg@spec <- lapply(prg@spec, sapply, data.prg.log_dB)
-     }
-     
-     if (clip_dB$flag) {
-          prg@spec <- lapply(prg@spec, sapply, data.prg.clip_dB, clip_dB$spec_below, clip_dB$spec_aboev)
+     if (postproc$log) {
+          prg@spec <- lapply(prg@spec, sapply, data.prg.log)
+          
+          if (postproc$norm) {
+               max <- sapply(prg@spec, max)
+               max <- max(max)
+               prg@spec <- lapply(prg@spec, sapply, data.prg.norm, max)
+          }
+          
+          if (postproc$norm) {
+             prg@spec <- lapply(prg@spec, sapply, data.prg.clip, postproc$min_db, postproc$max_db)
+          }
      }
      
      prg
-}
-
-data.prg.normalize <- function(spec, max = 1) {
-     spec <- spec/max # normalize magnitude so that max is 0 dB.
-     spec
-}
-
-data.prg.log_dB <- function(spec) {
-     spec <- 20*log10(spec)
-     spec
-}
-
-data.prg.clip_dB <- function(spec, spec_below = -40, spec_above = -3) {
-     spec[spec < spec_below] <- spec_below # clip below -40 dB.
-     spec[spec > spec_above] <- spec_above # clip above -3 dB.
-     spec
 }
 
 plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill = TRUE, xlab = "Частота, Гц", ylab = "Амплитуда, дБ", mai = c(2.75, 2.75, 2.5, 1.5), ...) {
@@ -218,27 +218,29 @@ plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill =
      }
 }
 
-get.pws <- function(osg, wintime = 0.025, steptime = 0.01, fs_band = osg@samp.rate/2, norm_spec = TRUE, log_dB = TRUE, clip_dB = list(flag = FALSE, spec_below = -40, spec_above = -3)) {
+get.pws <- function(osg, wintime = 0.025, steptime = 0.01, fs_band = osg@samp.rate/2,  postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -40, max_db = -3)) {
      data <- data.osg.to_mono(osg)
-     # data <- data.osg.normalize(data)
-   
+     data <- data.osg.norm(data)
+     print(c(min(data), max(data)))
+
      pws <- powspec(data, osg@samp.rate, wintime = wintime, steptime = steptime)
-     print(max(pws))
      
      pws <- abs(pws[2:(nrow(pws)*fs_band/(osg@samp.rate/2)),]) # magnitude in range (0; fs_band] Hz.
      
-     if (norm_spec) {
-          print("norm")
-          pws <- data.prg.normalize(pws, max(pws))
+     print(min(pws))
+     print(max(pws))
+     if (postproc$log) {
+          pws <- data.prg.log(pws)
+          
+          if (postproc$norm) {
+               pws <- data.prg.norm(pws, max(pws))
+          }
+          
+          if (postproc$norm) {
+               pws <- data.prg.clip_dB(pws, postproc$min_db, postproc$max_db)
+          }
      }
-     
-     if (log_dB) {
-          pws <- data.prg.log_dB(pws)
-     }
-     
-     if (clip_dB$flag) {
-          pws <- data.prg.clip_dB(pws, clip_dB$spec_below, clip_dB$spec_above)
-     }
+     print(c(min(pws), max(pws)))
 
      list(pws = pws, fs_band = fs_band, steptime = steptime)
 }
@@ -271,8 +273,6 @@ plot.pws <- function(pws, xlab = "Врем\u44f, секунды", ylab = "Час
         labels_2 <- round(10^labels_2, digits = 0)
         labels_2[1] <- 0
      }
-     
-     print(max(pws$pws))
      
      image(x = t(pws$pws), col = gray(0:255 / 255), axes = FALSE, xlab = xlab, ylab = NA, ...)
      mtext(ylab, side = 4, line = 1, cex = g_cex * g_cex.lab)

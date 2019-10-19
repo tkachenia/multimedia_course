@@ -45,16 +45,16 @@ lection8.test <- function() {
    #Spectre
    wav <- get.osg("DOOM.wav")
    
-   pws <- get.pws(wav, fs_band = 8000, norm_spec = TRUE)
+   pws <- get.pws(wav, fs_band = 8000, postproc = list(log = FALSE, norm = FALSE, clip = FALSE, min_db = -80, max_db = -3))
    writePNG("test_09_1.png", func = plot.pws, arg_list = list(pws))
    
-   pws <- get.pws(wav, fs_band = 8000, norm_spec = FALSE)
+   pws <- get.pws(wav, fs_band = 8000, postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -80, max_db = -3))
    writePNG("test_09_2.png", func = plot.pws, arg_list = list(pws))
 
-   pws <- get.pws(wav, fs_band = 8000, norm_spec = FALSE)
+   pws <- get.pws(wav, fs_band = 8000, postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -80, max_db = -3))
    writePNG("test_09_3.png", func = plot.pws, arg_list = list(pws, log = TRUE))
    
-   pws <- get.pws(wav, clip_dB = list(flag = TRUE, spec_below = -150, spec_above = -65))
+   pws <- get.pws(wav, postproc = list(log = TRUE, norm = FALSE, clip = TRUE, min_db = -150, max_db = -65))
    writePNG("test_09_4.png", func = plot.pws, arg_list = list(pws))
    
    NULL
