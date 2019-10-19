@@ -181,7 +181,7 @@ get.prg <- function(osg, width = length(osg), overlap = 0, postproc = list(log =
                prg@spec <- lapply(prg@spec, sapply, data.prg.norm, max)
           }
           
-          if (postproc$norm) {
+          if (postproc$clip) {
              prg@spec <- lapply(prg@spec, sapply, data.prg.clip, postproc$min_db, postproc$max_db)
           }
      }
@@ -221,26 +221,22 @@ plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill =
 get.pws <- function(osg, wintime = 0.025, steptime = 0.01, fs_band = osg@samp.rate/2,  postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -40, max_db = -3)) {
      data <- data.osg.to_mono(osg)
      data <- data.osg.norm(data)
-     print(c(min(data), max(data)))
 
      pws <- powspec(data, osg@samp.rate, wintime = wintime, steptime = steptime)
-     
      pws <- abs(pws[2:(nrow(pws)*fs_band/(osg@samp.rate/2)),]) # magnitude in range (0; fs_band] Hz.
+     pws <- pws / max(pws)
      
-     print(min(pws))
-     print(max(pws))
      if (postproc$log) {
           pws <- data.prg.log(pws)
           
-          if (postproc$norm) {
+          if (postproc$norm && max(pws) != 0) {
                pws <- data.prg.norm(pws, max(pws))
           }
           
-          if (postproc$norm) {
+          if (postproc$clip) {
                pws <- data.prg.clip_dB(pws, postproc$min_db, postproc$max_db)
           }
      }
-     print(c(min(pws), max(pws)))
 
      list(pws = pws, fs_band = fs_band, steptime = steptime)
 }
@@ -249,9 +245,22 @@ plot.pws <- function(pws, xlab = "Врем\u44f, секунды", ylab = "Час
      plot.set.par(mai = mai)
    
      duration <- ncol(pws$pws) * pws$steptime
-     delta_t <- floor(duration/10)
-     at_1 <- c(seq(0, 1, delta_t/duration), 1)
-     labels_1 <- c(round(seq(0, duration, delta_t), digits = 0), "")
+     if (duration < 10) {
+          delta_t <- duration/10
+          digits <- 1
+          for (i in 1:10) {
+             if (delta_t*10^i > 1) {
+                digits <- i
+                break
+             }
+          }
+          at_1 <- c(seq(0, 1, delta_t/duration))
+          labels_1 <- c(round(seq(0, duration, delta_t), digits = digits))
+     } else {
+          delta_t <- floor(duration/10)
+          at_1 <- c(seq(0, 1, delta_t/duration), 1)
+          labels_1 <- c(round(seq(0, duration, delta_t), digits = 0), "")
+     }
      
      at_2 <- seq(0, 1, 0.1)
      labels_2 <- seq(0, pws$fs_band, pws$fs_band/10)

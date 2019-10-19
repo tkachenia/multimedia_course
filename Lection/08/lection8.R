@@ -45,18 +45,19 @@ lection8.test <- function() {
    #Spectre
    wav <- get.osg("DOOM.wav")
    
-   pws <- get.pws(wav, fs_band = 8000, postproc = list(log = FALSE, norm = FALSE, clip = FALSE, min_db = -80, max_db = -3))
+   pws <- get.pws(wav, fs_band = 8000)
    writePNG("test_09_1.png", func = plot.pws, arg_list = list(pws))
-   
-   pws <- get.pws(wav, fs_band = 8000, postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -80, max_db = -3))
-   writePNG("test_09_2.png", func = plot.pws, arg_list = list(pws))
 
-   pws <- get.pws(wav, fs_band = 8000, postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -80, max_db = -3))
-   writePNG("test_09_3.png", func = plot.pws, arg_list = list(pws, log = TRUE))
+   pws <- get.pws(wav, fs_band = 8000)
+   writePNG("test_09_2.png", func = plot.pws, arg_list = list(pws, log = TRUE))
    
-   pws <- get.pws(wav, postproc = list(log = TRUE, norm = FALSE, clip = TRUE, min_db = -150, max_db = -65))
-   writePNG("test_09_4.png", func = plot.pws, arg_list = list(pws))
+   pws <- get.pws(wav, postproc = list(log = TRUE, norm = TRUE, clip = TRUE, min_db = -150, max_db = -65))
+   writePNG("test_09_3.png", func = plot.pws, arg_list = list(pws))
    
+   wav <- get.osg("DOOM.wav", from = 29.5, to = 30, units = "seconds")
+   pws <- get.pws(wav, fs_band = 8000)
+   writePNG("test_10.png", func = plot.pws, arg_list = list(pws, log = TRUE))
+
    NULL
 }
 
