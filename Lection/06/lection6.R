@@ -1,6 +1,9 @@
-local_path <- "D:/Ubuntu/Share/Курс_Мультимедийные системы и среды"
+# install.packages("rstudioapi")
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-setwd(paste0(local_path, "/multimedia_course/Lection/06"))
+# local_path <- "D:/Ubuntu/Share/Курс_Мультимедийные системы и среды"
+# setwd(paste0(local_path, "/multimedia_course/Lection/06"))
+
 Sys.setlocale("LC_CTYPE", "russian")
 source("../generate.R", encoding="utf-8")
 source("../png.R")
