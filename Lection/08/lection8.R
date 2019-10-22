@@ -6,6 +6,7 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
 Sys.setlocale("LC_CTYPE", "russian")
 source("../wave.R", encoding="utf-8")
+source("../generate.R", encoding="utf-8")
 source("../png.R")
 
 steganography.encrypt <- function(wav_ref, steg_in, wav_out) {
@@ -52,8 +53,7 @@ lection8.test <- function() {
    
    data <- get.osg("DOOM.wav", from = 29, to = 30, units = "seconds")
    writePNG("test_02_1.png", func = plot.osg, arg_list = list(data, mai = c(2.75, 2.75, 1.25, 1.5)))
-   writePNG("test_02_2.png", func = plot.osg, arg_list = list(data, type = "l", mai = c(2.75, 2.75, 1.25, 1.5)))
-   writePNG("test_02_3.png", func = plot.osg, arg_list = list(data, xunit = "samples", type = "l", mai = c(2.75, 2.75, 1.25, 1.5)))
+   writePNG("test_02_2.png", func = plot.osg, arg_list = list(data, xunit = "samples", mai = c(2.75, 2.75, 1.25, 1.5)))
    
    data <- get.osg("DOOM.wav", from = 10, to = 30, units = "seconds")
    writePNG("test_03.png", func = plot.osg, arg_list = list(data, mai = c(2.75, 2.75, 1.25, 1.5)))
@@ -64,8 +64,9 @@ lection8.test <- function() {
    data <- get.osg("01_16.wav")
    writePNG("test_05.png", func = plot.osg, arg_list = list(data, mai = c(2.75, 2.75, 1.25, 1.5)))
    
-   data <- get.osg("01_16.wav", from = 0, to = 2, units = "seconds")
-   writePNG("test_05_1.png", func = plot.osg, arg_list = list(data, type = "l", mai = c(2.75, 2.75, 1.25, 1.5)))
+   data <- get.osg("01_16.wav", from = 0, to = 3, units = "seconds")
+   writePNG("test_05_1.png", func = plot.osg, arg_list = list(data, mai = c(2.75, 2.75, 1.25, 1.5)))
+   writePNG("test_05_2.png", func = plot.osg, arg_list = list(data, type = "l", mai = c(2.75, 2.75, 1.25, 1.5)))
    
    #Periodogram
    data <- get.osg("01_16.wav")
@@ -120,19 +121,32 @@ lection8.make <- function() {
    writePNG("04.png", func = plot.pws, c_xy = c_xy, arg_list = list(pws2, title = "Спектрограмма"))
    # Pentogram spectre
    
+   # Raw data
+   px <- seq(0, 0.06, 0.002)
+   py <- rep(-1 + c((2/15)* 7, (2/15)*15, (2/15)*12, (2/15)* 3, (2/15)* 0), length.out = 31)
+   
+   writePNG.open("05.png", func = plot.gen.sin, arg_list = list(100, title = " ", type = "n"))
+   for (i in 0:30) {
+      writePNG.add("05.png", func = plot.lines, arg_list = list(c(i/(5*100), i/(5*100)), c(-2, 2)))
+      writePNG.add("05.png", func = plot.lines, arg_list = list(c(-1, 1), c(-1 + (2/15)*i, -1 + (2/15)*i)))
+   }
+   writePNG.add("05.png", func = plot.points, arg_list = list(px, py))
+   writePNG.close("05.png", func = NULL)
+   #
+   
    # Referenced wav
    # full oscilogram
    wav <- get.osg("01_16.wav")
-   writePNG("05.png", func = plot.osg, arg_list = list(wav, title = "Осцилограма"))
+   writePNG("06.png", func = plot.osg, arg_list = list(wav, title = "Осцилограма"))
    
    for (i in 0:5) {
       # part oscilogram
       data <- get.osg("01_16.wav", from = 2*i, to = 2*i + 0.02, units = "seconds")
-      writePNG(paste0(sprintf("%02d", 6 + i), "_osg.png"), func = plot.osg, arg_list = list(data, title = "Осцилограма", lwd = 2, draw_ox = FALSE))
+      writePNG(paste0(sprintf("%02d", 7 + i), "_osg.png"), func = plot.osg, arg_list = list(data, title = "Осцилограма", lwd = 2, draw_ox = FALSE))
       # part spectre
       data <- get.osg("01_16.wav", from = 2*i, to = 2*i + 1, units = "seconds")
       prg <- get.prg(data, width = 32768, overlap = -(data@samp.rate - 32768))
-      writePNG(paste0(sprintf("%02d", 6 + i), "_prg.png"), func = plot.prg, arg_list = list(prg, which = 1, ylim = c(-120, 0), log = "x", title = "Спектр"))
+      writePNG(paste0(sprintf("%02d", 7 + i), "_prg.png"), func = plot.prg, arg_list = list(prg, which = 1, ylim = c(-120, 0), log = "x", title = "Спектр"))
    }
    # Referenced wav
    
@@ -145,15 +159,15 @@ lection8.make <- function() {
    description_list = c("constant 128 kbps", "constant 320 kbps", "variable 128 kbps")
    for (i in 1:length(file_name_list)) {
       mp3 <- get.osg(file_name_list[i], from = 2258)
-      writePNG(paste0(sprintf("%02d", 11 + i), "_osg.png"), func = plot.osg, arg_list = list(mp3, title = paste0("Осцилограма", sprintf(" (%s)", description_list[i]))))
+      writePNG(paste0(sprintf("%02d", 12 + i), "_osg.png"), func = plot.osg, arg_list = list(mp3, title = paste0("Осцилограма", sprintf(" (%s)", description_list[i]))))
       
       data <- wav
       data@left[1:length(mp3@left)] <- wav@left[1:length(mp3@left)] - mp3@left
       data@left <- pmax( -32768, pmin(data@left, 32767))
-      writePNG(paste0(sprintf("%02d", 11 + i), "_osg_delta.png"), func = plot.osg, c_xy = c_xy, arg_list = list(data, title = paste0("Осцилограма искажения", sprintf(" (%s)", description_list[i]))))
+      writePNG(paste0(sprintf("%02d", 12 + i), "_osg_delta.png"), func = plot.osg, c_xy = c_xy, arg_list = list(data, title = paste0("Осцилограма искажения", sprintf(" (%s)", description_list[i]))))
       
       pws <- get.pws(data, postproc = list(log = TRUE, norm = TRUE, clip = TRUE, min_db = -150, max_db = -65))
-      writePNG(paste0(sprintf("%02d", 11 + i), "_pws.png"), func = plot.pws, c_xy = c_xy, arg_list = list(pws, title = paste0("Спектр искажения", sprintf(" (%s)", description_list[i]))))
+      writePNG(paste0(sprintf("%02d", 12 + i), "_pws.png"), func = plot.pws, c_xy = c_xy, arg_list = list(pws, title = paste0("Спектр искажения", sprintf(" (%s)", description_list[i]))))
       
       print(paste0(description_list[i], " delta: ", sprintf("%.2f%%", 100.0*sum(abs(as.numeric(data@left)))/sum(abs(as.numeric(wav@left)))), sprintf(" (compression = %.2f times)", file.size("01_16.wav")/file.size(file_name_list[i]))))
    }
@@ -171,15 +185,15 @@ lection8.make <- function() {
    description_list = c("flac faster 24 bit", "flac best 24 bit")
    for (i in 1:length(file_name_list)) {
       flac <- get.osg(file_name_list[i])
-      writePNG(paste0(sprintf("%02d", 14 + i), "_osg.png"), func = plot.osg, arg_list = list(flac, title = paste0("Осцилограма", sprintf(" (%s)", description_list[i]))))
+      writePNG(paste0(sprintf("%02d", 15 + i), "_osg.png"), func = plot.osg, arg_list = list(flac, title = paste0("Осцилограма", sprintf(" (%s)", description_list[i]))))
       
       data <- wav
       data@left[1:length(flac@left)] <- wav@left[1:length(flac@left)] - flac@left
       data@left <- pmax( -32768, pmin(data@left, 32767))
-      writePNG(paste0(sprintf("%02d", 14 + i), "_osg_delta.png"), func = plot.osg, c_xy = c_xy, arg_list = list(data, title = paste0("Осцилограма искажения", sprintf(" (%s)", description_list[i]))))
+      writePNG(paste0(sprintf("%02d", 15 + i), "_osg_delta.png"), func = plot.osg, c_xy = c_xy, arg_list = list(data, ylim <- c(-0.001, 0.001), title = paste0("Осцилограма искажения", sprintf(" (%s)", description_list[i]))))
       
-      pws <- get.pws(data, postproc = list(log = TRUE, norm = TRUE, clip = TRUE, min_db = -150, max_db = -65))
-      writePNG(paste0(sprintf("%02d", 14 + i), "_pws.png"), func = plot.pws, c_xy = c_xy, arg_list = list(pws, title = paste0("Спектр искажения", sprintf(" (%s)", description_list[i]))))
+      pws <- get.pws(data, postproc = list(log = TRUE, norm = FALSE, clip = FALSE))
+      writePNG(paste0(sprintf("%02d", 15 + i), "_pws.png"), func = plot.pws, c_xy = c_xy, arg_list = list(pws, title = paste0("Спектр искажения", sprintf(" (%s)", description_list[i]))))
       
       print(paste0(description_list[i], " delta: ", sprintf("%.4f%%", 100.0*sum(abs(as.numeric(data@left)))/sum(abs(as.numeric(wav@left)))), sprintf(" (compression = %.2f times)", file.size("01_16.wav")/file.size(flac_name_list[i]))))
    }
@@ -196,10 +210,10 @@ lection8.make <- function() {
    
    steganography.encrypt(wav_fn_in, steg_fn_in, wav_fn_out)
    #
-   dataIn <- get.osg(wav_fn_in, units = "samples", from = 1, to = fsize)
-   dataOut <- get.osg(wav_fn_out, units = "samples", from = 1, to = fsize)
+   dataIn <- get.osg(wav_fn_in, units = "samples", from = 1, to = steg_size)
+   dataOut <- get.osg(wav_fn_out, units = "samples", from = 1, to = steg_size)
    dataOut@left <- dataIn@left - dataOut@left
-   writePNG("17.png", func = plot.osg, arg_list = list(dataOut, title = "Осцилограма искажения (variable 128 kbps)", xunit = "samples", lwd = 2))
+   writePNG("18.png", func = plot.osg, arg_list = list(dataOut, ylim <- c(-0.001, 0.001), title = "Осцилограма искажения (Стеганография)", xunit = "samples", lwd = 2))
    print(paste0(wav_fn_out, " delta: ", sprintf("%.4f%%", 100.0*sum(abs(as.numeric(dataOut@left)))/sum(abs(as.numeric(dataIn@left)))), sprintf(" (compression = %.2f times)", file.size(wav_fn_in)/file.size(wav_fn_out))))
    # !01_16.wav delta: 0.0025% (compression = 1.00 times)
    #

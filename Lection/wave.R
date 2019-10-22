@@ -81,7 +81,7 @@ data.osg.to_mono <- function(data) {
 data.osg.norm <- function(data) {
      maximum <- max(abs(range(data)))
      norm_data <- data / maximum
-     
+
      norm_data
 }
 
@@ -93,7 +93,7 @@ data.osg.ranged <- function(data, x_resolution = NULL) {
      ranged_data <- rep(0, times = 2*x_resolution)
      dt <- length(data)/x_resolution
      for (i in 1:x_resolution) {
-          min_max <- range(data[(i*dt) : ((i+1)*dt)])
+          min_max <- range(data[(((i - 1)*dt) + 1) : (i*dt)])
           ranged_data[2*i - 1] <- min_max[1]
           ranged_data[2*i] <- min_max[2]
      }  
@@ -101,15 +101,17 @@ data.osg.ranged <- function(data, x_resolution = NULL) {
      ranged_data
 }
 
-data.osg <- function(osg, x_resolution = NULL) {
-     mono_osg <- data.osg.to_mono(osg)
-     norm_osg <- data.osg.norm(mono_osg)
-     ranged_osg <- data.osg.ranged(norm_osg, x_resolution)
-
-     ranged_osg
+data.osg <- function(osg, norm = FALSE, x_resolution = NULL) {
+     data <- data.osg.to_mono(osg)
+     data <- data.osg.ranged(data, x_resolution)
+     if (norm) {
+        data <- data.osg.norm(data)
+     }
+     
+     data
 }
 
-time.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples")) {
+time.osg <- function(osg, xunit = c("time", "samples"), x_resolution = 2000) {
      dt <- 1
      t_length <- length(osg@left)
      if (!is.null(x_resolution)) {
@@ -130,15 +132,15 @@ time.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples")) {
      t
 }
 
-plot.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples"), title = "", xlab = "Врем\u44f", ylab = "Амплитуда", type = "h", draw_ox = TRUE, lwd = 1, mai = g_mai, ...) {
+plot.osg <- function(osg, ylim = c(-1, 1), norm = FALSE, x_resolution = 2000, xunit = c("time", "samples"), title = "", xlab = "Врем\u44f", ylab = "Амплитуда", type = "h", draw_ox = TRUE, lwd = 1, mai = g_mai, ...) {
      plot.set.par(mai = mai)
      
      if (length(osg@left) / osg@samp.rate < 2.5) {
           x_resolution <- NULL
           type = "l"
      }
-     y <- data.osg(osg, x_resolution)
-     t <- time.osg(osg, x_resolution, xunit)
+     y <- data.osg(osg, norm, x_resolution)
+     t <- time.osg(osg, xunit, x_resolution)
      
      if (xunit[1] == "samples") {
           xlab <- paste0(xlab, ", отсчеты")
@@ -146,7 +148,14 @@ plot.osg <- function(osg, x_resolution = 2000, xunit = c("time", "samples"), tit
           xlab <- paste0(xlab, ", секунды")
      }
      
-     plot(t, y, ylim = c(-1, 1), main = title, xlab = xlab, ylab = ylab, type = type, lty = "solid", col = "black", lwd = (if (lwd == 1) 1 else lwd * g_lwd_scale), las = 1, ...)
+     if (!osg@pcm) {
+          y <- data.osg.norm(y)
+     } else {
+          border <- (2^osg@bit) / 2
+          y <- y / border
+     }
+     
+     plot(t, y, ylim = ylim, main = title, xlab = xlab, ylab = ylab, type = type, lty = "solid", col = "black", lwd = (if (lwd == 1) 1 else lwd * g_lwd_scale), las = (if (ylim[2] == 1) 1 else 3), ...)
      
      if (draw_ox) {
           t_head <- head(t, n = 1)
@@ -182,7 +191,9 @@ get.prg <- function(osg, width = length(osg), overlap = 0, postproc = list(log =
           if (postproc$norm) {
                max <- sapply(prg@spec, max)
                max <- max(max)
-               prg@spec <- lapply(prg@spec, sapply, data.prg.norm, max)
+               if (max != 0) {
+                    prg@spec <- lapply(prg@spec, sapply, data.prg.norm, max)
+               }
           }
           
           if (postproc$clip) {
@@ -208,14 +219,6 @@ plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill =
      
      plot(x = prg@freq, y = prg@spec[[which]], ylim = ylim, type = "l", lty = "solid", col = "black", main = title, xlab = xlab, ylab = ylab, ...)
      
-     # ylab on the right side
-     # args <- c(list(x = substitute(prg@freq), y = substitute(prg@spec[[which]]), ylim = ylim, type = "l", lty = "solid", col = "black", xlab = xlab, ylab = NA), list(...))
-     # do.call(plot, args)
-     # op <- par(mar = c(5,3,4,3) + 0.1)
-     # axis(side = 4, labels = FALSE, tick = FALSE)
-     # mtext(ylab, side = 4, line = 1)
-     # ylab on the right side
-     
      if (fill) {
           min <- min(prg@spec[[which]])
           polygon(c(head(prg@freq, n = 1), prg@freq, tail(prg@freq, n = 1)), c(1.1*ylim[1], prg@spec[[which]], 1.1*ylim[1]), col = "black")
@@ -224,7 +227,6 @@ plot.prg <- function(prg, which = 1, ylim = c(min(prg@spec[[which]]), 0), fill =
 
 get.pws <- function(osg, wintime = 0.025, steptime = 0.01, fs_band = osg@samp.rate/2,  postproc = list(log = TRUE, norm = FALSE, clip = FALSE, min_db = -40, max_db = -3)) {
      data <- data.osg.to_mono(osg)
-     data <- data.osg.norm(data)
 
      pws <- powspec(data, osg@samp.rate, wintime = wintime, steptime = steptime)
      pws <- abs(pws[2:(nrow(pws)*fs_band/(osg@samp.rate/2)),]) # magnitude in range (0; fs_band] Hz.
