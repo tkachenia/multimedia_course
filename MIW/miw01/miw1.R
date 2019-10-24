@@ -1,8 +1,9 @@
-local_path <- "D:/Ubuntu/Share/Курс_Мультимедийные системы и среды"
-local_path <- "C:/TkacheniaAV/MyDisc/Git"
-local_path <- "D:/MyDisk/Git"
+# install.packages("rstudioapi")
+setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 
-setwd(paste0(local_path, "/multimedia_course/MIW/miw01"))
+# local_path <- "D:/Ubuntu/Share/Курс_Мультимедийные системы и среды"
+# setwd(paste0(local_path, "/multimedia_course/MIW/miw01"))
+
 Sys.setlocale("LC_CTYPE", "russian")
 source("../base.R")
 
