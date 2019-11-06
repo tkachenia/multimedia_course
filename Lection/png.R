@@ -1,8 +1,8 @@
 # install.packages("png")
+library("png")
 
 g_png_resolution <- c(1920, 1080)
 
-library("png")
 writePNG.open <- function(file_name, func, c_xy = g_png_resolution, arg_list = list()) {
      subdir_exec("pic", impl.writePNG.open, file_name, func = func, c_xy = c_xy, arg_list = arg_list)
      NULL
