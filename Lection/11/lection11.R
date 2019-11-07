@@ -25,11 +25,11 @@ rotate <- function(x) {
      t(apply(x, 2, rev))
 }
 
-add_frame <- function(m, elem = 0, width = 1) {
-     col_ins <- matrix(elem, nrow = nrow(m), ncol = width)
+add_frame <- function(m, width = 1, pen = 0) {
+     col_ins <- matrix(pen, nrow = nrow(m), ncol = width)
      m <- cbind(col_ins, m, col_ins)
      
-     row_ins <- matrix(elem, nrow = width, ncol = ncol(m))
+     row_ins <- matrix(pen, nrow = width, ncol = ncol(m))
      rbind(row_ins, m, row_ins)
 }
 
@@ -55,6 +55,16 @@ resize <- function(m, coef = 1, downscale = FALSE, func = max) {
      }
      
      return(tmp)
+}
+
+get_rect <- function(row, col, k_resize) {
+     rect <- list()
+     rect$x <- (col - 1)*k_resize + ifelse(col == 1, 1, 0)
+     rect$y <- (row - 1)*k_resize + ifelse(row == 1, 1, 0)
+     rect$width  <- 1*k_resize + ifelse(col != 1, 1, 0)
+     rect$height <- 1*k_resize + ifelse(row != 1, 1, 0)
+     
+     return(rect)
 }
 
 draw_rect <- function(mtrx, up_left = c(1, 1), width, height, sub.width = width, sub.height = height, border = 1, sub.border = 1, pen = NA, sub.pen = pen, fill = FALSE, fill.pen = pen, notdrawside = c(0)) {
@@ -434,9 +444,126 @@ subsampling.upscale <- function(ltr, str_ltr, coef = 1) {
      return(list(mtrx = mtrx, pic = pic, col = head(col, -1)))
 }
 
-magic_wang_DFS <- function(mtrx, x, y, delta = 1) {
+draw.DFS <- function(mtrx, map, p_i, p_j, i, j, name, idx) {
+     k_resize <- 10
+     p_rect <- get_rect(p_i, p_j, k_resize)
+     rect <- get_rect(i, j, k_resize)
+     
+     mtrx_ <- resize(mtrx, k_resize)
+     mtrx_ <- draw_rect(mtrx_, c(1, 1), ncol(mtrx)*k_resize, nrow(mtrx)*k_resize, 1*k_resize, 1*k_resize, pen = 1)
+     mtrx_ <- draw_rect(mtrx_, c(p_rect$x, p_rect$y), p_rect$width, p_rect$height, p_rect$width, p_rect$height, pen = 5)
+     mtrx_ <- draw_rect(mtrx_, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = 6)
+     mtrx_ <- add_frame(mtrx_, width = k_resize)
+     
+     map_ <- resize(map, k_resize)
+     map_ <- draw_rect(map_, c(1, 1), ncol(map)*k_resize, nrow(map)*k_resize, 1*k_resize, 1*k_resize, pen = 1)
+     map_ <- draw_rect(map_, c(p_rect$x, p_rect$y), p_rect$width, p_rect$height, p_rect$width, p_rect$height, pen = 5)
+     map_ <- draw_rect(map_, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = 6)
+     map_ <- add_frame(map_, width = k_resize)
+     
+     pic <- cbind(mtrx_, matrix(0, nrow = nrow(mtrx_), ncol = k_resize), map_)
+     c_xy <- 3 * rev(dim(pic))
+     c_xy_titled <- c_xy; c_xy_titled[2] <- c_xy_titled[2] + 60
+     
+     # Save title separately
+     png_name_titled <- "text.png"
+     if (!file.exists(png_name_titled)) {
+          impl.writePNG(png_name_titled, func = plot, c_xy = c_xy_titled, arg_list = list(cex.main = 4, mar = c(1, 1, 4, 1), x = 0, y = 0, type =  "n", axes = FALSE, main = "Поиск границы объекта в глубину"))
+     }
+     png_titled <- array(data = NA, c(rev(c_xy_titled) ,3))
+     # Load image with title
+     png_titled[,,] <- readPNG(png_name_titled)
+     
+     # map color: 0 - default (empty = white), 1 - stop traverse (border = black), 2 - continue traverse (mask = green), 3 and 4 - (empty = white), 5 - parent (rect = red), 6 - position (rect = blue)
+     col <- c("#FFFFFF", "#000000", "#00FF00", "#FFFFFF", "#FFFFFF", "#FF0000", "#0000FF")
+     png_name <- sprintf("%s_%03d.png", name, idx); idx <- idx + 1
+     # Save image with proportional size
+     impl.writePNG(png_name, func = plot.image, c_xy = c_xy, arg_list = list(mar = c(0,0,0,0), x = rotate(pic), col = col, axes = FALSE, main = NA))
+     # Load saved image and join it with title
+     png_titled[(c_xy_titled[2] - c_xy[2] + 1):c_xy_titled[2],,] <- readPNG(png_name)
+     # Save resulted image
+     impl.writePNG(png_name, func = grid.raster, c_xy = c_xy_titled, arg_list = list(png_titled))
+
+     # map color: 0 - default (empty = white), 1 and 3 - stop traverse (border = black), 2 and 4 - continue traverse (mask = green), 5 - parent (rect = red), 6 - position (rect = blue)
+     col <- c("#FFFFFF", "#000000", "#00FF00", "#000000", "#00FF00", "#FF0000", "#0000FF")
+     png_name <- sprintf("%s_%03d.png", name, idx); idx <- idx + 1
+     impl.writePNG(png_name, func = plot.image, c_xy = c_xy, arg_list = list(mar = c(0,0,0,0), x = rotate(pic), col = col, axes = FALSE, main = NA))
+     png_titled[(c_xy_titled[2] - c_xy[2] + 1):c_xy_titled[2],,] <- readPNG(png_name)
+     impl.writePNG(png_name, func = grid.raster, c_xy = c_xy_titled, arg_list = list(png_titled))
+     
+     return(list(map = map_, col = col, idx = idx))
+}
+
+traverse.DFS <- function(mtrx, i, j, delta = 1, subdir = "test", name = "picture") {
+     row <- nrow(mtrx)
+     col <- ncol(mtrx)
    
+     stack <- list(position = array(data = 0, dim = c(2, row*col)),
+                   parent = array(data = 0, dim = c(2, row*col)),
+                   tail = 1)
+     stack$position[,stack$tail] <- c(i, j)
+     stack$parent[,stack$tail] <- c(i, j)
+     stack$tail <- stack$tail + 1 # push
+     
+     idx <- 1
+     value <- mtrx[i, j]
+     map <- array(data = 0, dim = dim(mtrx))
+     visited <- array(data = 0, dim = dim(mtrx))
+     
+     # debug_countdown <- 10
+     # while (stack$tail != 1 && debug_countdown > 0) {
+     while (stack$tail != 1) {
+          # debug_countdown <- debug_countdown - 1
+          stack$tail <- stack$tail - 1; # pop
+          i <- stack$position[1, stack$tail]; j <- stack$position[2, stack$tail]
+          p_i <- stack$parent[1, stack$tail]; p_j <- stack$parent[2, stack$tail]
+          if (visited[i, j] != 1) {
+               visited[i, j] <- 1
+               
+               # 0 - default (empty = white), 1 - stop traverse (border = black), 2 - continue traverse (mask = green)
+               map[i, j] <- ifelse(abs(mtrx[i, j] - value) >= delta, 1, 2)
+               
+               map[i, j] <- map[i, j] + 2 # shift to 3 or 4
+               ret <- subdir_exec(subdir, draw.DFS, mtrx, map, p_i, p_j, i, j, name, idx)
+               map[i, j] <- map[i, j] - 2
+               idx <- ret$idx
+               
+               if (map[i, j] == 2) {
+                    if (i - 1 >= 1) { # move up
+                         stack$position[,stack$tail] <- c(i - 1, j)
+                         stack$parent[,stack$tail] <- c(i, j)
+                         stack$tail <- stack$tail + 1 # push
+                    }
+                    if (i + 1 <= row) { # move down
+                         stack$position[,stack$tail] <- c(i + 1, j)
+                         stack$parent[,stack$tail] <- c(i, j)
+                         stack$tail <- stack$tail + 1 # push
+                    }
+                    if (j - 1 >= 1) { # move left
+                       stack$position[,stack$tail] <- c(i, j - 1)
+                       stack$parent[,stack$tail] <- c(i, j)
+                       stack$tail <- stack$tail + 1 # push
+                    }
+                    if (j + 1 <= col) { # move right
+                       stack$position[,stack$tail] <- c(i, j + 1)
+                       stack$parent[,stack$tail] <- c(i, j)
+                       stack$tail <- stack$tail + 1 # push
+                    }
+               }
+          }
+     }
+     
+     # subdir_exec(subdir, magic_wang_search, y, x)
+     # cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subdir, "/", mw$name, "_*.png"), paste0(mw$name, ".gif"))
+     # system(cmnd)
+
+     border <- array(data = 0, dim = dim(mtrx))
+     border[map == 1] <- 1
+     
+     mask <- array(data = 0, dim = dim(mtrx))
+     mask[map == 2] <- 1
    
+     return(list(border = border, mask = mask))
 }
 
 magic_wang <- function(mtrx, x, y, delta = 1) {
@@ -548,6 +675,17 @@ super_magic_wang <- function() {
    crcl <- add_frame(crcl, width = 2)
 
    subdir <- "test"
+   name <- "cicle"
+   ret <- subdir_exec("pic", traverse.DFS, crcl, 6, 6, subdir = subdir, name = name)
+   
+   k_resize <- 10
+   area <- ret$mask
+   area <- resize(area, k_resize)
+   area <- draw_rect(area, c(1, 1), ncol(area), nrow(area), k_resize, k_resize, pen = 0)
+   area <- add_frame(area, width = k_resize, pen = 2)
+   writePNG("4_circle_dfs.png", func = plot.image, c_xy = c(555, 600), arg_list = list(x = rotate(area), col = c("#000000", "#00FF00", "#FFFFFF"), axes = FALSE, main = "Ядро свертки"))
+   
+   
    ret <- subdir_exec("pic", magic_wang, crcl, 6, 6, subdir = subdir)
    cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subdir, "/", mw$name, "_*.png"), paste0(mw$name, ".gif"))
    system(cmnd)
@@ -815,4 +953,4 @@ lection11.make <- function() {
      return(NULL)
 }
 
-lection8.make()
+lection11.make()
