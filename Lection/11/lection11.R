@@ -25,12 +25,20 @@ rotate <- function(x) {
      t(apply(x, 2, rev))
 }
 
-add_frame <- function(m, width = 1, pen = 0) {
+add_frame <- function(m, width = 1, coef = NULL, pen = 0) {
+     if (!is.null(coef)) {
+          width <- ((coef - 1) * ncol(m)) / 2
+     }
      col_ins <- matrix(pen, nrow = nrow(m), ncol = width)
      m <- cbind(col_ins, m, col_ins)
      
+     if (!is.null(coef)) {
+        width <- ((coef - 1) * nrow(m)) / 2
+     }
      row_ins <- matrix(pen, nrow = width, ncol = ncol(m))
-     rbind(row_ins, m, row_ins)
+     m <- rbind(row_ins, m, row_ins)
+     
+     return(m)
 }
 
 resize <- function(m, coef = 1, downscale = FALSE, func = max) {
@@ -57,12 +65,12 @@ resize <- function(m, coef = 1, downscale = FALSE, func = max) {
      return(tmp)
 }
 
-get_rect <- function(row, col, k_resize) {
+get_rect <- function(row, col, k_resize, shift = 1, coef = 1) {
      rect <- list()
-     rect$x <- (col - 1)*k_resize + ifelse(col == 1, 1, 0)
-     rect$y <- (row - 1)*k_resize + ifelse(row == 1, 1, 0)
-     rect$width  <- 1*k_resize + ifelse(col != 1, 1, 0)
-     rect$height <- 1*k_resize + ifelse(row != 1, 1, 0)
+     rect$x <- (col - shift)*coef*k_resize + ifelse(col == 1, 1, 0)
+     rect$y <- (row - shift)*coef*k_resize + ifelse(row == 1, 1, 0)
+     rect$width  <- 1*coef*k_resize + ifelse(col != 1, 1, 0)
+     rect$height <- 1*coef*k_resize + ifelse(row != 1, 1, 0)
      
      return(rect)
 }
@@ -152,7 +160,7 @@ convolution <- function(ltr, krnl, str_ltr) {
           for (j in 1:(ncol(ltrf)-2)) {
                kernel_1 <- draw_rect(ltrfr, c((j-1)*k_resize+1, (i-1)*k_resize+1), 3*k_resize, 3*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
                kernel_2 <- draw_rect(kernel_1, c((j-1)*k_resize+1, i*k_resize), 3*k_resize, 1*k_resize+1, 1*k_resize, 1*k_resize+1, pen = pen[length(pen)])
-
+             
                png_name_left <- paste0(str_ltr, "-kl_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
                impl.writePNG(png_name_left, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(kernel_2), col = col, axes = FALSE, main = paste("Свертка с ядром\nдля ", str_ltr)))
                
@@ -161,16 +169,12 @@ convolution <- function(ltr, krnl, str_ltr) {
                data[i, j] <- sum(krnl*ltrf[i:(i+nrow(krnl)-1), j:(j+ncol(krnl)-1)])/sum(krnl)
                
                mtrx[i, j] <- sum(krnl*ltrf[i:(i+nrow(krnl)-1), j:(j+ncol(krnl)-1)])
-               mtrx_f <- add_frame(mtrx)
-               mtrx_fr <- resize(mtrx_f, k_resize)
-               
-               feature_1 <- draw_rect(mtrx_fr, c(k_resize+1, k_resize+1), ncol(mtrx)*k_resize, nrow(mtrx)*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
+               feature_1 <- resize(mtrx, k_resize)
+               feature_1 <- draw_rect(feature_1, c(1, 1), ncol(mtrx)*k_resize, nrow(mtrx)*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
                pic <- feature_1
-               x <- j*k_resize + (if (j == 1) 1 else 0)
-               y <- i*k_resize + (if (i == 1) 1 else 0)
-               width  <- 1*k_resize + (if (j != 1) 1 else 0)
-               height <- 1*k_resize + (if (i != 1) 1 else 0)
-               feature_2 <- draw_rect(feature_1, c(x, y), width, height, width, height, pen = pen[length(pen)])
+               feature_1 <- add_frame(feature_1, width = k_resize)
+               rect <- get_rect(i, j, k_resize, shift = 0)
+               feature_2 <- draw_rect(feature_1, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = pen[length(pen)])
                
                png_name_right <- paste0(str_ltr, "-fm_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
                impl.writePNG(png_name_right, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(feature_2), col = col, axes = FALSE, main = paste("Карта признаков\nдля", str_ltr)))
@@ -287,12 +291,9 @@ subsampling.downscale <- function(ltr, str_ltr, coef = 1) {
      for (i in 1:nrow(mtrx)) {
           for (j in 1:ncol(mtrx)) {
                in_1 <- draw_rect(ltr_r, c(1, 1), ncol(ltr)*k_resize, nrow(ltr)*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
-               x <- (j-1)*coef*k_resize + (if (j == 1) 1 else 0)
-               y <- (i-1)*coef*k_resize + (if (i == 1) 1 else 0)
-               width  <- 1*coef*k_resize + (if (j != 1) 1 else 0)
-               height <- 1*coef*k_resize + (if (i != 1) 1 else 0)
-               in_2 <- draw_rect(in_1, c(x, y), width, height, width, height, pen = pen[length(pen)])
-               in_3 <- add_frame(in_2, 0, k_resize)
+               rect <- get_rect(i, j, k_resize, coef = coef)
+               in_2 <- draw_rect(in_1, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = pen[length(pen)])
+               in_3 <- add_frame(in_2, width = k_resize, pen = 0)
                
                png_name_left <- paste0(str_ltr, "-down_in_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
                impl.writePNG(png_name_left, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(in_3), col = col, axes = FALSE, main = paste("Входная карта\nпризнаков для ", str_ltr)))
@@ -304,17 +305,10 @@ subsampling.downscale <- function(ltr, str_ltr, coef = 1) {
                
                out_1 <- draw_rect(mtrx_r, c(1, 1), ncol(mtrx)*k_resize, nrow(mtrx)*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
                pic <- out_1
-               x <- (j-1)*k_resize + (if (j == 1) 1 else 0)
-               y <- (i-1)*k_resize + (if (i == 1) 1 else 0)
-               width  <- 1*k_resize + (if (j != 1) 1 else 0)
-               height <- 1*k_resize + (if (i != 1) 1 else 0)
-               out_2 <- draw_rect(out_1, c(x, y), width, height, width, height, pen = pen[length(pen)])
-               
-               col_ins <- matrix(0, nrow = nrow(out_2), ncol = (ncol(in_2) - ncol(out_2))/2)
-               out_3 <- cbind(col_ins, out_2, col_ins)
-               row_ins <- matrix(0, nrow = (nrow(in_2) - nrow(out_3))/2, ncol = ncol(out_3))
-               out_3 <- rbind(row_ins, out_3, row_ins)
-               out_4 <- add_frame(out_3, 0, k_resize)
+               rect <- get_rect(i, j, k_resize)
+               out_2 <- draw_rect(out_1, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = pen[length(pen)])
+               out_3 <- add_frame(out_2, coef = 2, pen = 0)
+               out_4 <- add_frame(out_3, width = k_resize, pen = 0)
                
                png_name_right <- paste0(str_ltr, "-down_out_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
                impl.writePNG(png_name_right, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(out_4), col = col, axes = FALSE, main = paste("Выходная карта\nпризнаков для", str_ltr)))
@@ -378,17 +372,10 @@ subsampling.upscale <- function(ltr, str_ltr, coef = 1) {
      for (i in 1:nrow(ltr)) {
           for (j in 1:ncol(ltr)) {
                in_1 <- draw_rect(ltr_r, c(1, 1), ncol(ltr)*k_resize, nrow(ltr)*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
-               x <- (j-1)*k_resize + (if (j == 1) 1 else 0)
-               y <- (i-1)*k_resize + (if (i == 1) 1 else 0)
-               width  <- 1*k_resize + (if (j != 1) 1 else 0)
-               height <- 1*k_resize + (if (i != 1) 1 else 0)
-               in_2 <- draw_rect(in_1, c(x, y), width, height, width, height, pen = pen[length(pen)])
-               
-               col_ins <- matrix(0, nrow = nrow(in_2), ncol = (k_resize*ncol(mtrx) - ncol(in_2))/2)
-               in_3 <- cbind(col_ins, in_2, col_ins)
-               row_ins <- matrix(0, nrow = (k_resize*nrow(mtrx) - nrow(in_3))/2, ncol = ncol(in_3))
-               in_3 <- rbind(row_ins, in_3, row_ins)
-               in_4 <- add_frame(in_3, 0, k_resize)
+               rect <- get_rect(i, j, k_resize)
+               in_2 <- draw_rect(in_1, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = pen[length(pen)])
+               in_3 <- add_frame(in_2, coef = 2, pen = 0)
+               in_4 <- add_frame(in_3, width = k_resize, pen = 0)
                
                png_name_left <- paste0(str_ltr, "-up_in_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
                impl.writePNG(png_name_left, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(in_4), col = col, axes = FALSE, main = paste("Входная карта\nпризнаков для ", str_ltr)))
@@ -400,12 +387,9 @@ subsampling.upscale <- function(ltr, str_ltr, coef = 1) {
                
                out_1 <- draw_rect(mtrx_r, c(1, 1), ncol(mtrx)*k_resize, nrow(mtrx)*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
                pic <- out_1
-               x <- (j-1)*coef*k_resize + (if (j == 1) 1 else 0)
-               y <- (i-1)*coef*k_resize + (if (i == 1) 1 else 0)
-               width  <- 1*coef*k_resize + (if (j != 1) 1 else 0)
-               height <- 1*coef*k_resize + (if (i != 1) 1 else 0)
-               out_2 <- draw_rect(out_1, c(x, y), width, height, width, height, pen = pen[length(pen)])
-               out_3 <- add_frame(out_2, 0, k_resize)
+               rect <- get_rect(i, j, k_resize, coef = coef)
+               out_2 <- draw_rect(out_1, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = pen[length(pen)])
+               out_3 <- add_frame(out_2, width = k_resize, pen = 0)
                
                png_name_right <- paste0(str_ltr, "-up_out_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
                impl.writePNG(png_name_right, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(out_3), col = col, axes = FALSE, main = paste("Выходная карта\nпризнаков для", str_ltr)))
@@ -468,7 +452,7 @@ draw.DFS <- function(mtrx, map, p_i, p_j, i, j, name, idx) {
      # Save title separately
      png_name_titled <- "text.png"
      if (!file.exists(png_name_titled)) {
-          impl.writePNG(png_name_titled, func = plot, c_xy = c_xy_titled, arg_list = list(cex.main = 4, mar = c(1, 1, 4, 1), x = 0, y = 0, type =  "n", axes = FALSE, main = "Поиск границы объекта в глубину"))
+          impl.writePNG(png_name_titled, func = plot, c_xy = c_xy_titled, arg_list = list(cex.main = 4, mai = rep(0, 4), mar = rep(0, 4), x = 0, y = 0, type =  "n", axes = FALSE, main = "Поиск границы объекта в глубину"))
      }
      png_titled <- array(data = NA, c(rev(c_xy_titled) ,3))
      # Load image with title
@@ -510,10 +494,7 @@ traverse.DFS <- function(mtrx, i, j, delta = 1, subdir = "test", name = "picture
      map <- array(data = 0, dim = dim(mtrx))
      visited <- array(data = 0, dim = dim(mtrx))
      
-     # debug_countdown <- 10
-     # while (stack$tail != 1 && debug_countdown > 0) {
      while (stack$tail != 1) {
-          # debug_countdown <- debug_countdown - 1
           stack$tail <- stack$tail - 1; # pop
           i <- stack$position[1, stack$tail]; j <- stack$position[2, stack$tail]
           p_i <- stack$parent[1, stack$tail]; p_j <- stack$parent[2, stack$tail]
@@ -553,9 +534,11 @@ traverse.DFS <- function(mtrx, i, j, delta = 1, subdir = "test", name = "picture
           }
      }
      
-     # subdir_exec(subdir, magic_wang_search, y, x)
-     # cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subdir, "/", mw$name, "_*.png"), paste0(mw$name, ".gif"))
-     # system(cmnd)
+     cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subdir, "/", name, "_*.png"), paste0(subdir, "/", name, "_slow.gif"))
+     system(cmnd)
+     
+     cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 5", paste0(subdir, "/", name, "_*.png"), paste0(subdir, "/", name, "_fast.gif"))
+     system(cmnd)
 
      border <- array(data = 0, dim = dim(mtrx))
      border[map == 1] <- 1
@@ -564,99 +547,6 @@ traverse.DFS <- function(mtrx, i, j, delta = 1, subdir = "test", name = "picture
      mask[map == 2] <- 1
    
      return(list(border = border, mask = mask))
-}
-
-magic_wang <- function(mtrx, x, y, delta = 1) {
-   map <- array(data = 0, dim = dim(mtrx))
-   
-   map <- matrix(0, nrow = nrow(mtrx), ncol = ncol(mtrx))
-   
-   magic_wang_search(map, mtrx[y, x], mtrx, y, x, rep(T, 4), 1)
-   
-   return(map)
-}
-
-mw <- NA
-
-magic_wang_draw <- function(row, col, direction = 0) {
-   k_resize <- 10
-   color <- c("#FFFFFF", "#000000", "#00FF00", "#0000FF", "#FF0000")
-   mtrx_r <- resize(mw$mtrx, k_resize)
-   mtrx_ <- draw_rect(mtrx_r, c(1, 1), ncol(mw$mtrx)*k_resize, nrow(mw$mtrx)*k_resize, 1*k_resize, 1*k_resize, pen = 3)
-   x <- (col-1)*k_resize + (if (col == 1) 1 else 0)
-   y <- (row-1)*k_resize + (if (row == 1) 1 else 0)
-   width  <- 1*k_resize + (if (col != 1) 1 else 0)
-   height <- 1*k_resize + (if (row != 1) 1 else 0)
-   mtrx_ <- draw_rect(mtrx_, c(x, y), width, height, width, height, pen = 4, notdrawside = direction)
-   mtrx_ <- add_frame(mtrx_, width = k_resize)
-   map_r <- resize(mw$map, k_resize)
-   map_ <- draw_rect(map_r, c(1, 1), ncol(mw$map)*k_resize, nrow(mw$map)*k_resize, 1*k_resize, 1*k_resize, pen = 3)
-   x <- (col-1)*k_resize + (if (col == 1) 1 else 0)
-   y <- (row-1)*k_resize + (if (row == 1) 1 else 0)
-   width  <- 1*k_resize + (if (col != 1) 1 else 0)
-   height <- 1*k_resize + (if (row != 1) 1 else 0)
-   map_ <- draw_rect(map_, c(x, y), width, height, width, height, pen = 4, notdrawside = direction)
-   map_ <- add_frame(map_, width = k_resize)
-   pic <- cbind(mtrx_, matrix(0, nrow = nrow(mtrx_), ncol = k_resize), map_)
-   png(sprintf("%s_%03d.png", mw$name, mw$ind), 960, 640)
-   mw$ind <<- mw$ind + 1
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(pic), col = color, axes = FALSE, main = "Поиск границы объекта")
-   dev.off()
-}
-
-magic_wang_search <- function(row, col) {
-   if (abs(mw$mtrx[row, col]-mw$value) >= mw$delta) {
-      mw$map[row, col] <<- 1
-      magic_wang_draw(row, col)
-      return(NULL)
-   } else {
-      mw$map[row, col] <<- 2
-      magic_wang_draw(row, col, 1)
-   }
-   if (row < nrow(mw$mtrx)) {
-      if (mw$map[row+1, col] == 0)
-         magic_wang_search(row+1, col)
-   } else
-      mw$map[row, col] <<- 1
-   magic_wang_draw(row, col, 4)
-   if (col < ncol(mw$mtrx)) {
-      if (mw$map[row, col+1] == 0)
-         magic_wang_search(row, col+1)
-   } else
-      mw$map[row, col] <<- 1
-   magic_wang_draw(row, col, 3)
-   if (row > 1) {
-      if (mw$map[row-1, col] == 0)
-         magic_wang_search(row-1, col)
-   } else
-      mw$map[row, col] <<- 1
-   magic_wang_draw(row, col, 2)
-   if (col > 1) {
-      if (mw$map[row, col-1] == 0)
-         magic_wang_search(row, col-1)
-   } else
-      mw$map[row, col] <<- 1
-   magic_wang_draw(row, col)
-   return(NULL)
-}
-
-magic_wang <- function(mtrx, x, y, delta = 1, subdir = "test") {
-   mw <<- new.env()
-   mw$mtrx <<- mtrx
-   mw$delta <<- delta
-   mw$value <<- mtrx[y, x]
-   mw$name <<- "circle"
-   mw$map <<- matrix(0, nrow = nrow(mtrx), ncol = ncol(mtrx))
-   mw$ind <<- 1
-   subdir_exec(subdir, magic_wang_search, y, x)
-   cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subdir, "/", mw$name, "_*.png"), paste0(mw$name, ".gif"))
-   system(cmnd)
-   border <- matrix(0, nrow = nrow(mtrx), ncol = ncol(mtrx))
-   border[mw$map == 1] <- 1
-   mask <- matrix(0, nrow = nrow(mtrx), ncol = ncol(mtrx))
-   mask[mw$map == 2] <- 1
-   return(list(border = border, mask = mask))
 }
 
 super_magic_wang <- function() {
@@ -675,7 +565,7 @@ super_magic_wang <- function() {
    crcl <- add_frame(crcl, width = 2)
 
    subdir <- "test"
-   name <- "cicle"
+   name <- "circle"
    ret <- subdir_exec("pic", traverse.DFS, crcl, 6, 6, subdir = subdir, name = name)
    
    k_resize <- 10
@@ -684,41 +574,7 @@ super_magic_wang <- function() {
    area <- draw_rect(area, c(1, 1), ncol(area), nrow(area), k_resize, k_resize, pen = 0)
    area <- add_frame(area, width = k_resize, pen = 2)
    writePNG("4_circle_dfs.png", func = plot.image, c_xy = c(555, 600), arg_list = list(x = rotate(area), col = c("#000000", "#00FF00", "#FFFFFF"), axes = FALSE, main = "Ядро свертки"))
-   
-   
-   ret <- subdir_exec("pic", magic_wang, crcl, 6, 6, subdir = subdir)
-   cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subdir, "/", mw$name, "_*.png"), paste0(mw$name, ".gif"))
-   system(cmnd)
-   
-   # old code
-   
-   # Letter Circle
-   crcl <- matrix(data = 0, nrow = 12, ncol = 12)
-   r1 <- 6
-   r2 <- 5
-   for (i in 1:ncol(crcl)) {
-      for (j in 1:nrow(crcl)) {
-         if (abs(sqrt((i-6.5)^2+(j-6.5)^2) - r1) < 1)
-            crcl[i, j] <- 1
-         if (abs(sqrt((i-6.5)^2+(j-6.5)^2) - r2) < 1)
-            crcl[i, j] <- 1
-      }
-   }
-   crcl[6:7,1:2] <- 0
-   crcl_f <- add_frame(crcl)
-   writePNG("3_cicrle.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(crcl_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Разорванный круг"))
 
-   x <- magic_wang_DFS(crcl, 6, 6)
-   
-   k_resize <- 10
-   
-   crcl_r <- resize(crcl, k_resize)
-   crcl_ <- draw_rect(crcl_r, c(1, 1), ncol(crcl)*k_resize, nrow(crcl)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
-   png("2_cicrle_.png", 480, 640)
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(add_frame(crcl_, width = k_resize)), col = crcl_down$col, axes = FALSE, main = "Разорванный круг")
-   dev.off()
-   
    crcl_down <- subsampling(crcl, "Circle", 2)
    crcl_down_ <- crcl_down$pic
    col_ins <- matrix(0, nrow = nrow(crcl_down_), ncol = (k_resize*ncol(crcl) - ncol(crcl_down_))/2)
@@ -914,7 +770,7 @@ lection11.make <- function() {
      writePNG("2_kernel.png", func = plot.image, c_xy = c(500, 500), arg_list = list(x = rotate(kernel_r10_grid_red_f5), col = c("#FFFFFF", "#000000", "#FF0000"), axes = FALSE, main = "Ядро свертки"))
 
      unk_fm <- subdir_exec("pic", convolution, unk, kernel, "Unknown")
-     writePNG("Unknown-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(unk_fm$pic), col = unk_fm$col, axes = FALSE, main = "Карта признаков\nдля Unknown"))
+     writePNG("Unknown-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_fm$pic, width = 10)), col = unk_fm$col, axes = FALSE, main = "Карта признаков\nдля Unknown"))
      
      # a_fm <- convolution(a, t, "a")
      # e_fm <- convolution(e, t, "e")
@@ -929,8 +785,8 @@ lection11.make <- function() {
      # cat("? -> O = ", unk_o, " (", 100*unk_o/length(unk_fm$data),"%)\n", file = f_fm)
      # close(f_fm)
      
-     unk_sub <- subdir_exec("pic", subsampling, unk_fm$mtrx, "Unknown", 2)
-     writePNG("Unknown-down_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_sub$pic, width = 40)), col = unk_sub$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
+     unk_down <- subdir_exec("pic", subsampling, unk_fm$mtrx, "Unknown", 2)
+     writePNG("Unknown-down_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(add_frame(unk_down$pic, coef = 2), width = 10)), col = unk_down$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
      
      # a_sub <- subsampling(a_fm$mtrx, "a", 2)
      # e_sub <- subsampling(e_fm$mtrx, "e", 2)
@@ -945,8 +801,8 @@ lection11.make <- function() {
      # cat("? -> O = ", unk_o, " (", 100*unk_o/length(unk_sub$data),"%)\n", file = f_fm)
      # close(f_sub)
      
-     unk_up <- subdir_exec("pic", subsampling, unk_sub$mtrx, "Unknown", 2, downscale = FALSE)
-     writePNG("Unknown-up_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(unk_up$pic), col = unk_up$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
+     unk_up <- subdir_exec("pic", subsampling, unk_down$mtrx, "Unknown", 2, downscale = FALSE)
+     writePNG("Unknown-up_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_up$pic, width = 10)), col = unk_up$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
      
      super_magic_wang()
      
