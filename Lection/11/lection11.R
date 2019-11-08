@@ -344,7 +344,7 @@ subsampling.downscale <- function(ltr, str_ltr, coef = 1) {
      
      setwd(mainDir)
      
-     return(list(mtrx = mtrx, pic = pic, col = head(col, -1)))
+     return(list(data = mtrx, mtrx = mtrx, pic = pic, col = head(col, -1)))
 }
 
 subsampling.upscale <- function(ltr, str_ltr, coef = 1) {
@@ -425,7 +425,7 @@ subsampling.upscale <- function(ltr, str_ltr, coef = 1) {
      
      setwd(mainDir)
      
-     return(list(mtrx = mtrx, pic = pic, col = head(col, -1)))
+     return(list(data = mtrx, mtrx = mtrx, pic = pic, col = head(col, -1)))
 }
 
 draw.DFS <- function(mtrx, map, p_i, p_j, i, j, name, idx) {
@@ -562,138 +562,121 @@ super_magic_wang <- function() {
       }
    }
    crcl[6:7,1:2] <- 0
-   crcl <- add_frame(crcl, width = 2)
-
+   crcl_dfs <- add_frame(crcl, width = 2)
+   
    subdir <- "test"
-   name <- "circle"
-   ret <- subdir_exec("pic", traverse.DFS, crcl, 6, 6, subdir = subdir, name = name)
+   name <- "DFS"
+   ret <- subdir_exec("pic", traverse.DFS, crcl_dfs, 6, 6, subdir = subdir, name = name)
    
    k_resize <- 10
    area <- ret$mask
    area <- resize(area, k_resize)
    area <- draw_rect(area, c(1, 1), ncol(area), nrow(area), k_resize, k_resize, pen = 0)
    area <- add_frame(area, width = k_resize, pen = 2)
-   writePNG("4_circle_dfs.png", func = plot.image, c_xy = c(555, 600), arg_list = list(x = rotate(area), col = c("#000000", "#00FF00", "#FFFFFF"), axes = FALSE, main = "Ядро свертки"))
+   writePNG("05_circle_dfs.png", func = plot.image, c_xy = c(555, 600), arg_list = list(x = rotate(area), col = c("#000000", "#00FF00", "#FFFFFF"), axes = FALSE, main = "Ядро свертки"))
 
-   crcl_down <- subsampling(crcl, "Circle", 2)
-   crcl_down_ <- crcl_down$pic
-   col_ins <- matrix(0, nrow = nrow(crcl_down_), ncol = (k_resize*ncol(crcl) - ncol(crcl_down_))/2)
-   crcl_down_ <- cbind(col_ins, crcl_down_, col_ins)
-   row_ins <- matrix(0, nrow = (k_resize*nrow(crcl) - nrow(crcl_down_))/2, ncol = ncol(crcl_down_))
-   crcl_down_ <- rbind(row_ins, crcl_down_, row_ins)
-   png("3_cicrle_down.png", 480, 640)
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(add_frame(crcl_down_, width = k_resize)), col = crcl_down$col, axes = FALSE, main = "Уменьшили в 2 раза")
-   dev.off()
+   k_resize <- 10
+   crcl_ <- resize(crcl, coef = 10)
+   writePNG("06_circle.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(add_frame(crcl_, width = k_resize)), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Разорванный круг"))
    
-   crcl_down <- subsampling(crcl, "Circle", 2)
-   crcl_down_ <- crcl_down$pic
-   crcl_down_[(2*k_resize):(4*k_resize), 1*k_resize] <- 3
-   crcl_down_[(2*k_resize):(4*k_resize), 5*k_resize] <- 3
-   crcl_down_[(1*k_resize):(2*k_resize), 2*k_resize] <- 3
-   crcl_down_[(4*k_resize):(5*k_resize), 2*k_resize] <- 3
-   crcl_down_[(1*k_resize):(2*k_resize), 4*k_resize] <- 3
-   crcl_down_[(4*k_resize):(5*k_resize), 4*k_resize] <- 3
-   crcl_down_[1*k_resize, (2*k_resize):(4*k_resize)] <- 3
-   crcl_down_[5*k_resize, (2*k_resize):(4*k_resize)] <- 3
-   crcl_down_[2*k_resize, (1*k_resize):(2*k_resize)] <- 3
-   crcl_down_[2*k_resize, (4*k_resize):(5*k_resize)] <- 3
-   crcl_down_[4*k_resize, (1*k_resize):(2*k_resize)] <- 3
-   crcl_down_[4*k_resize, (4*k_resize):(5*k_resize)] <- 3
-   col_ins <- matrix(0, nrow = nrow(crcl_down_), ncol = (k_resize*ncol(crcl) - ncol(crcl_down_))/2)
-   crcl_down_ <- cbind(col_ins, crcl_down_, col_ins)
-   row_ins <- matrix(0, nrow = (k_resize*nrow(crcl) - nrow(crcl_down_))/2, ncol = ncol(crcl_down_))
-   crcl_down_ <- rbind(row_ins, crcl_down_, row_ins)
-   png("4_cicrle_down_sel.png", 480, 640)
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(add_frame(crcl_down_, width = k_resize)), col = c(crcl_down$col, "#FF0000"), axes = FALSE, main = "Уменьшили в 2 раза")
-   dev.off()
+   crcl_grid <- draw_rect(crcl_, c(1, 1), ncol(crcl)*k_resize, nrow(crcl)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+   writePNG("07_circle_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(add_frame(crcl_grid, width = k_resize)), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Разорванный круг"))
    
-   crcl_up <- subsampling(crcl_down$mtrx, "Circle", 2, downscale = FALSE)
-   crcl_up_ <- crcl_up$pic
-   crcl_up_[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
-   crcl_up_[(4*k_resize):(8*k_resize), 10*k_resize] <- 3
-   crcl_up_[(2*k_resize):(4*k_resize), 4*k_resize] <- 3
-   crcl_up_[(8*k_resize):(10*k_resize), 4*k_resize] <- 3
-   crcl_up_[(2*k_resize):(4*k_resize), 8*k_resize] <- 3
-   crcl_up_[(8*k_resize):(10*k_resize), 8*k_resize] <- 3
-   crcl_up_[2*k_resize, (4*k_resize):(8*k_resize)] <- 3
-   crcl_up_[10*k_resize, (4*k_resize):(8*k_resize)] <- 3
-   crcl_up_[4*k_resize, (2*k_resize):(4*k_resize)] <- 3
-   crcl_up_[4*k_resize, (8*k_resize):(10*k_resize)] <- 3
-   crcl_up_[8*k_resize, (2*k_resize):(4*k_resize)] <- 3
-   crcl_up_[8*k_resize, (8*k_resize):(10*k_resize)] <- 3
-   png("5_cicrle_up_sel.png", 480, 640)
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(add_frame(crcl_up_, width = k_resize)), col = c(crcl_up$col, "#FF0000") , axes = FALSE, main = "Увеличили в 2 раза")
-   dev.off()
+   crcl_down <- subdir_exec("pic", subsampling, crcl, "Circle", 2)
+   writePNG("08_circle_down.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(add_frame(crcl_down$pic, coef = 2), width = k_resize)), col = crcl_down$col, axes = FALSE, main = "Разорванный круг\nуменьшенный в 2 раза"))
+
+   crcl_down_pic <- crcl_down$pic
+   crcl_down_pic[(2*k_resize):(4*k_resize), 1*k_resize] <- 3
+   crcl_down_pic[(2*k_resize):(4*k_resize), 5*k_resize] <- 3
+   crcl_down_pic[(1*k_resize):(2*k_resize), 2*k_resize] <- 3
+   crcl_down_pic[(4*k_resize):(5*k_resize), 2*k_resize] <- 3
+   crcl_down_pic[(1*k_resize):(2*k_resize), 4*k_resize] <- 3
+   crcl_down_pic[(4*k_resize):(5*k_resize), 4*k_resize] <- 3
+   crcl_down_pic[1*k_resize, (2*k_resize):(4*k_resize)] <- 3
+   crcl_down_pic[5*k_resize, (2*k_resize):(4*k_resize)] <- 3
+   crcl_down_pic[2*k_resize, (1*k_resize):(2*k_resize)] <- 3
+   crcl_down_pic[2*k_resize, (4*k_resize):(5*k_resize)] <- 3
+   crcl_down_pic[4*k_resize, (1*k_resize):(2*k_resize)] <- 3
+   crcl_down_pic[4*k_resize, (4*k_resize):(5*k_resize)] <- 3
+   writePNG("09_circle_down_area.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(add_frame(crcl_down_pic, coef = 2), width = k_resize)), col = c(crcl_down$col, "#FF0000"), axes = FALSE, main = "Разорванный круг\nуменьшенный в 2 раза"))
    
-   crcl_sel <- crcl_
-   crcl_sel[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
-   crcl_sel[(4*k_resize):(8*k_resize), 10*k_resize] <- 3
-   crcl_sel[(2*k_resize):(4*k_resize), 4*k_resize] <- 3
-   crcl_sel[(8*k_resize):(10*k_resize), 4*k_resize] <- 3
-   crcl_sel[(2*k_resize):(4*k_resize), 8*k_resize] <- 3
-   crcl_sel[(8*k_resize):(10*k_resize), 8*k_resize] <- 3
-   crcl_sel[2*k_resize, (4*k_resize):(8*k_resize)] <- 3
-   crcl_sel[10*k_resize, (4*k_resize):(8*k_resize)] <- 3
-   crcl_sel[4*k_resize, (2*k_resize):(4*k_resize)] <- 3
-   crcl_sel[4*k_resize, (8*k_resize):(10*k_resize)] <- 3
-   crcl_sel[8*k_resize, (2*k_resize):(4*k_resize)] <- 3
-   crcl_sel[8*k_resize, (8*k_resize):(10*k_resize)] <- 3
-   png("6_cicrle_sel.png", 480, 640)
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(add_frame(crcl_sel, width = k_resize)), col = c(crcl_up$col, "#FF0000") , axes = FALSE, main = "Разорванный круг")
-   dev.off()
+   crcl_up <- subdir_exec("pic", subsampling, crcl_down$mtrx, "Circle", 2, downscale = FALSE)
+   writePNG("10_circle_up.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_up$pic, width = k_resize)), col = crcl_up$col, axes = FALSE, main = "Восстановленный\nразорванный круг"))
    
-   crcl_fill <- crcl_sel
-   x <- crcl_fill[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)]
+   crcl_up_pic <- crcl_up$pic
+   crcl_up_pic[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
+   crcl_up_pic[(4*k_resize):(8*k_resize), 10*k_resize] <- 3
+   crcl_up_pic[(2*k_resize):(4*k_resize), 4*k_resize] <- 3
+   crcl_up_pic[(8*k_resize):(10*k_resize), 4*k_resize] <- 3
+   crcl_up_pic[(2*k_resize):(4*k_resize), 8*k_resize] <- 3
+   crcl_up_pic[(8*k_resize):(10*k_resize), 8*k_resize] <- 3
+   crcl_up_pic[2*k_resize, (4*k_resize):(8*k_resize)] <- 3
+   crcl_up_pic[10*k_resize, (4*k_resize):(8*k_resize)] <- 3
+   crcl_up_pic[4*k_resize, (2*k_resize):(4*k_resize)] <- 3
+   crcl_up_pic[4*k_resize, (8*k_resize):(10*k_resize)] <- 3
+   crcl_up_pic[8*k_resize, (2*k_resize):(4*k_resize)] <- 3
+   crcl_up_pic[8*k_resize, (8*k_resize):(10*k_resize)] <- 3
+   writePNG("11_circle_up_area.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_up_pic, width = k_resize)), col = c(crcl_up$col, "#FF0000"), axes = FALSE, main = "Разорванный круг\nуменьшенный в 2 раза"))
+   
+   crcl_grid_sel <- crcl_grid
+   crcl_grid_sel[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
+   crcl_grid_sel[(4*k_resize):(8*k_resize), 10*k_resize] <- 3
+   crcl_grid_sel[(2*k_resize):(4*k_resize), 4*k_resize] <- 3
+   crcl_grid_sel[(8*k_resize):(10*k_resize), 4*k_resize] <- 3
+   crcl_grid_sel[(2*k_resize):(4*k_resize), 8*k_resize] <- 3
+   crcl_grid_sel[(8*k_resize):(10*k_resize), 8*k_resize] <- 3
+   crcl_grid_sel[2*k_resize, (4*k_resize):(8*k_resize)] <- 3
+   crcl_grid_sel[10*k_resize, (4*k_resize):(8*k_resize)] <- 3
+   crcl_grid_sel[4*k_resize, (2*k_resize):(4*k_resize)] <- 3
+   crcl_grid_sel[4*k_resize, (8*k_resize):(10*k_resize)] <- 3
+   crcl_grid_sel[8*k_resize, (2*k_resize):(4*k_resize)] <- 3
+   crcl_grid_sel[8*k_resize, (8*k_resize):(10*k_resize)] <- 3
+   writePNG("12_circle_up_area_sel.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_grid_sel, width = k_resize)), col = c(crcl_up$col, "#FF0000"), axes = FALSE, main = "Разорванный круг\nс полученной маской"))
+   
+   crcl_grid_sel_fill <- crcl_grid_sel
+   x <- crcl_grid_sel_fill[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)]
    x[x==0] <- 4
-   crcl_fill[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)] <- x
-   x <- crcl_fill[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)]
+   crcl_grid_sel_fill[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)] <- x
+   x <- crcl_grid_sel_fill[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)]
    x[x==0] <- 4
-   crcl_fill[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)] <- x
-   png("7_cicrle_sel_1.png", 480, 640)
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(add_frame(crcl_fill, width = k_resize)), col = c(crcl_up$col, "#FF0000", "#00FF00") , axes = FALSE, main = "Разорванный круг")
-   dev.off()
-   
-   crcl_fill_ <- crcl_
-   crcl_fill_[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
-   crcl_fill_[(4*k_resize):(8*k_resize), 10*k_resize] <- 3
-   crcl_fill_[(2*k_resize):(3*k_resize), 4*k_resize] <- 3
-   crcl_fill_[(3*k_resize):(4*k_resize), 3*k_resize] <- 3
-   crcl_fill_[(8*k_resize):(9*k_resize), 3*k_resize] <- 3
-   crcl_fill_[(9*k_resize):(10*k_resize), 4*k_resize] <- 3
-   crcl_fill_[(2*k_resize):(3*k_resize), 8*k_resize] <- 3
-   crcl_fill_[(3*k_resize):(4*k_resize), 9*k_resize] <- 3
-   crcl_fill_[(8*k_resize):(9*k_resize), 9*k_resize] <- 3
-   crcl_fill_[(9*k_resize):(10*k_resize), 8*k_resize] <- 3
-   crcl_fill_[2*k_resize, (4*k_resize):(8*k_resize)] <- 3
-   crcl_fill_[10*k_resize, (4*k_resize):(8*k_resize)] <- 3
-   crcl_fill_[4*k_resize, (2*k_resize):(3*k_resize)] <- 3
-   crcl_fill_[3*k_resize, (3*k_resize):(4*k_resize)] <- 3
-   crcl_fill_[3*k_resize, (8*k_resize):(9*k_resize)] <- 3
-   crcl_fill_[4*k_resize, (9*k_resize):(10*k_resize)] <- 3
-   crcl_fill_[8*k_resize, (2*k_resize):(3*k_resize)] <- 3
-   crcl_fill_[9*k_resize, (3*k_resize):(4*k_resize)] <- 3
-   crcl_fill_[9*k_resize, (8*k_resize):(9*k_resize)] <- 3
-   crcl_fill_[8*k_resize, (9*k_resize):(10*k_resize)] <- 3
-   x <- crcl_fill_[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)]
+   crcl_grid_sel_fill[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)] <- x
+   writePNG("13_circle_up_area_sel_fill.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_grid_sel_fill, width = k_resize)), col = c(crcl_up$col, "#FF0000", "#00FF00"), axes = FALSE, main = "Разорванный круг\nс полученной маской"))
+
+   crcl_grid_sel_fill_full <- crcl_grid
+   crcl_grid_sel_fill_full[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
+   crcl_grid_sel_fill_full[(4*k_resize):(8*k_resize), 10*k_resize] <- 3
+   crcl_grid_sel_fill_full[(2*k_resize):(3*k_resize), 4*k_resize] <- 3
+   crcl_grid_sel_fill_full[(3*k_resize):(4*k_resize), 3*k_resize] <- 3
+   crcl_grid_sel_fill_full[(8*k_resize):(9*k_resize), 3*k_resize] <- 3
+   crcl_grid_sel_fill_full[(9*k_resize):(10*k_resize), 4*k_resize] <- 3
+   crcl_grid_sel_fill_full[(2*k_resize):(3*k_resize), 8*k_resize] <- 3
+   crcl_grid_sel_fill_full[(3*k_resize):(4*k_resize), 9*k_resize] <- 3
+   crcl_grid_sel_fill_full[(8*k_resize):(9*k_resize), 9*k_resize] <- 3
+   crcl_grid_sel_fill_full[(9*k_resize):(10*k_resize), 8*k_resize] <- 3
+   crcl_grid_sel_fill_full[2*k_resize, (4*k_resize):(8*k_resize)] <- 3
+   crcl_grid_sel_fill_full[10*k_resize, (4*k_resize):(8*k_resize)] <- 3
+   crcl_grid_sel_fill_full[4*k_resize, (2*k_resize):(3*k_resize)] <- 3
+   crcl_grid_sel_fill_full[3*k_resize, (3*k_resize):(4*k_resize)] <- 3
+   crcl_grid_sel_fill_full[3*k_resize, (8*k_resize):(9*k_resize)] <- 3
+   crcl_grid_sel_fill_full[4*k_resize, (9*k_resize):(10*k_resize)] <- 3
+   crcl_grid_sel_fill_full[8*k_resize, (2*k_resize):(3*k_resize)] <- 3
+   crcl_grid_sel_fill_full[9*k_resize, (3*k_resize):(4*k_resize)] <- 3
+   crcl_grid_sel_fill_full[9*k_resize, (8*k_resize):(9*k_resize)] <- 3
+   crcl_grid_sel_fill_full[8*k_resize, (9*k_resize):(10*k_resize)] <- 3
+   x <- crcl_grid_sel_fill_full[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)]
    x[x==0] <- 4
-   crcl_fill_[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)] <- x
-   x <- crcl_fill_[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)]
+   crcl_grid_sel_fill_full[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)] <- x
+   x <- crcl_grid_sel_fill_full[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)]
    x[x==0] <- 4
-   crcl_fill_[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)] <- x
-   png("8_cicrle_sel_2.png", 480, 640)
-   par(cex.main = 4, mar = c(0, 0, 5, 0))
-   image(x = rotate(add_frame(crcl_fill_, width = k_resize)), col = c(crcl_up$col, "#FF0000", "#00FF00") , axes = FALSE, main = "Разорванный круг")
-   dev.off()
+   crcl_grid_sel_fill_full[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)] <- x
+   writePNG("14_circle_up_area_sel_fill_full.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_grid_sel_fill_full, width = k_resize)), col = c(crcl_up$col, "#FF0000", "#00FF00"), axes = FALSE, main = "Внутрянняя область\nразорванного круга"))
    
    return(NULL)
 }
 
 lection11.make <- function() {
+     k_resize <- 10
+   
      # Empty fild
      m <- matrix(data = 0, nrow = 12, ncol = 8)
      
@@ -709,7 +692,12 @@ lection11.make <- function() {
      unk[10,] <- 1
      unk[11,] <- 1
      unk_f <- add_frame(unk)
-     writePNG("1_unk.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква ?"))
+     writePNG("01_unk.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква ?"))
+     
+     unk_grid <- resize(unk, k_resize)
+     unk_grid <- draw_rect(unk_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+     unk_grid <- add_frame(unk_grid, width = k_resize)
+     writePNG("01_unk_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква ?"))
      
      # Letter A
      a <- m
@@ -724,8 +712,13 @@ lection11.make <- function() {
      a[9,] <- 1
      a[10,] <- 1
      a_f <- add_frame(a)
-     writePNG("1_A.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(a_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква А"))
+     writePNG("01_A.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(a_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква А"))
 
+     a_grid <- resize(a, k_resize)
+     a_grid <- draw_rect(a_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+     a_grid <- add_frame(a_grid, width = k_resize)
+     writePNG("01_A_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(a_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква А"))
+     
      # Letter E
      e <- m
      e[,1] <- 1
@@ -737,8 +730,13 @@ lection11.make <- function() {
      e[6, 1:6] <- 1
      e[7, 1:6] <- 1
      e_f <- add_frame(e)
-     writePNG("1_E.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(e_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква Е"))
+     writePNG("01_E.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(e_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква Е"))
 
+     e_grid <- resize(e, k_resize)
+     e_grid <- draw_rect(e_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+     e_grid <- add_frame(e_grid, width = k_resize)
+     writePNG("01_E_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(e_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква Е"))
+     
      # Letter O
      o <- m
      o[,1] <- 1
@@ -750,9 +748,15 @@ lection11.make <- function() {
      o[, ncol(o)-1] <- 1
      o[, ncol(o)] <- 1
      o_f <- add_frame(o)
-     writePNG("1_O.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(o_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква О"))
+     writePNG("01_O.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(o_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква О"))
 
-     f <- file("pic/1_res.txt", "w")
+     o_grid <- resize(unk, k_resize)
+     o_grid <- draw_rect(o_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+     o_grid <- add_frame(o_grid, width = k_resize)
+     writePNG("01_O_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(o_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква О"))
+     
+     # Result
+     f <- file("pic/01_res.txt", "w")
      unk_a <- sum(ifelse(unk == a, 1, 0))
      cat("? -> A = ", unk_a, " (", 100*unk_a/length(unk),"%)\n", file = f)
      unk_e <- sum(ifelse(unk == e, 1, 0))
@@ -761,50 +765,65 @@ lection11.make <- function() {
      cat("? -> O = ", unk_o, " (", 100*unk_o/length(unk),"%)\n", file = f)
      close(f)
      
+     # Kernel
      kernel <- matrix(data = 0, nrow = 3, ncol = 3)
      kernel[2,] <- 1
      kernel_r10 <- resize(kernel, 10)
      kernel_r10_grid <- draw_rect(kernel_r10, c(1, 1), 30, 30, 10, 10, pen = 1)
      kernel_r10_grid_red <- draw_rect(kernel_r10_grid, c(1, 10), 30, 11, 10, 11, pen = 2)
      kernel_r10_grid_red_f5 <- add_frame(kernel_r10_grid_red, width = 5)
-     writePNG("2_kernel.png", func = plot.image, c_xy = c(500, 500), arg_list = list(x = rotate(kernel_r10_grid_red_f5), col = c("#FFFFFF", "#000000", "#FF0000"), axes = FALSE, main = "Ядро свертки"))
+     writePNG("02_kernel.png", func = plot.image, c_xy = c(500, 500), arg_list = list(x = rotate(kernel_r10_grid_red_f5), col = c("#FFFFFF", "#000000", "#FF0000"), axes = FALSE, main = "Ядро свертки"))
 
+     # Convolution
      unk_fm <- subdir_exec("pic", convolution, unk, kernel, "Unknown")
-     writePNG("Unknown-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_fm$pic, width = 10)), col = unk_fm$col, axes = FALSE, main = "Карта признаков\nдля Unknown"))
+     writePNG("03_Unknown-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_fm$pic, width = 10)), col = unk_fm$col, axes = FALSE, main = "Карта признаков\nдля Unknown"))
      
-     # a_fm <- convolution(a, t, "a")
-     # e_fm <- convolution(e, t, "e")
-     # o_fm <- convolution(o, t, "o")
-     # 
-     # f_fm <- file("pic/2_res.txt", "w")
-     # unk_a <- sum(ifelse(unk_fm$data == a_fm$data, 1, 0))
-     # cat("? -> A = ", unk_a, " (", 100*unk_a/length(unk_fm$data),"%)\n", file = f_fm)
-     # unk_e <- sum(ifelse(unk_fm$data == e_fm$data, 1, 0))
-     # cat("? -> E = ", unk_e, " (", 100*unk_e/length(unk_fm$data),"%)\n", file = f_fm)
-     # unk_o <- sum(ifelse(unk_fm$data == o_fm$data, 1, 0))
-     # cat("? -> O = ", unk_o, " (", 100*unk_o/length(unk_fm$data),"%)\n", file = f_fm)
-     # close(f_fm)
+     a_fm <- subdir_exec("pic", convolution, a, kernel, "A")
+     writePNG("03_A-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(a_fm$pic, width = 10)), col = a_fm$col, axes = FALSE, main = "Карта признаков\nдля буквы А"))
      
+     e_fm <- subdir_exec("pic", convolution, e, kernel, "E")
+     writePNG("03_E-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(e_fm$pic, width = 10)), col = e_fm$col, axes = FALSE, main = "Карта признаков\nдля буквы Е"))
+     
+     o_fm <- subdir_exec("pic", convolution, o, kernel, "O")
+     writePNG("03_O-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(o_fm$pic, width = 10)), col = o_fm$col, axes = FALSE, main = "Карта признаков\nдля буквы О"))
+     
+     # Result
+     f_fm <- file("pic/03_res.txt", "w")
+     unk_a <- sum(ifelse(unk_fm$data == a_fm$data, 1, 0))
+     cat("? -> A = ", unk_a, " (", 100*unk_a/length(unk_fm$data),"%)\n", file = f_fm)
+     unk_e <- sum(ifelse(unk_fm$data == e_fm$data, 1, 0))
+     cat("? -> E = ", unk_e, " (", 100*unk_e/length(unk_fm$data),"%)\n", file = f_fm)
+     unk_o <- sum(ifelse(unk_fm$data == o_fm$data, 1, 0))
+     cat("? -> O = ", unk_o, " (", 100*unk_o/length(unk_fm$data),"%)\n", file = f_fm)
+     close(f_fm)
+     
+     # Downsamling
      unk_down <- subdir_exec("pic", subsampling, unk_fm$mtrx, "Unknown", 2)
-     writePNG("Unknown-down_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(add_frame(unk_down$pic, coef = 2), width = 10)), col = unk_down$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
+     writePNG("04_Unknown-down_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(add_frame(unk_down$pic, coef = 2), width = 10)), col = unk_down$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
      
-     # a_sub <- subsampling(a_fm$mtrx, "a", 2)
-     # e_sub <- subsampling(e_fm$mtrx, "e", 2)
-     # o_sub <- subsampling(o_fm$mtrx, "o", 2)
-     # 
-     # f_sub <- file("res_3.txt", "w")
-     # unk_a <- sum(ifelse(unk_sub$data == a_sub$data, 1, 0))
-     # cat("? -> A = ", unk_a, " (", 100*unk_a/length(unk_sub$data),"%)\n", file = f_fm)
-     # unk_e <- sum(ifelse(unk_sub$data == e_sub$data, 1, 0))
-     # cat("? -> E = ", unk_e, " (", 100*unk_e/length(unk_sub$data),"%)\n", file = f_fm)
-     # unk_o <- sum(ifelse(unk_sub$data == o_sub$data, 1, 0))
-     # cat("? -> O = ", unk_o, " (", 100*unk_o/length(unk_sub$data),"%)\n", file = f_fm)
-     # close(f_sub)
+     a_down <- subdir_exec("pic", subsampling, a_fm$mtrx, "A", 2)
+     writePNG("04_A-down_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(add_frame(a_down$pic, coef = 2), width = 10)), col = a_down$col, axes = FALSE, main = "Выходная карта\nпризнаков для буквы А"))
      
-     unk_up <- subdir_exec("pic", subsampling, unk_down$mtrx, "Unknown", 2, downscale = FALSE)
-     writePNG("Unknown-up_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_up$pic, width = 10)), col = unk_up$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
+     e_down <- subdir_exec("pic", subsampling, e_fm$mtrx, "E", 2)
+     writePNG("04_E-down_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(add_frame(e_down$pic, coef = 2), width = 10)), col = e_down$col, axes = FALSE, main = "Выходная карта\nпризнаков для буквы Е"))
      
-     super_magic_wang()
+     o_down <- subdir_exec("pic", subsampling, o_fm$mtrx, "O", 2)
+     writePNG("04_O-down_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(add_frame(o_down$pic, coef = 2), width = 10)), col = o_down$col, axes = FALSE, main = "Выходная карта\nпризнаков для буквы О"))
+     
+     # Result
+     f_sub <- file("pic/04_res.txt", "w")
+     unk_a <- sum(ifelse(unk_down$data == a_down$data, 1, 0))
+     cat("? -> A = ", unk_a, " (", 100*unk_a/length(unk_down$data),"%)\n", file = f_fm)
+     unk_e <- sum(ifelse(unk_down$data == e_down$data, 1, 0))
+     cat("? -> E = ", unk_e, " (", 100*unk_e/length(unk_down$data),"%)\n", file = f_fm)
+     unk_o <- sum(ifelse(unk_down$data == o_down$data, 1, 0))
+     cat("? -> O = ", unk_o, " (", 100*unk_o/length(unk_down$data),"%)\n", file = f_fm)
+     close(f_sub)
+     
+     # unk_up <- subdir_exec("pic", subsampling, unk_down$mtrx, "Unknown", 2, downscale = FALSE)
+     # writePNG("Unknown-up_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_up$pic, width = 10)), col = unk_up$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
+     
+     # super_magic_wang()
      
      return(NULL)
 }
