@@ -536,7 +536,7 @@ traverse.DFS <- function(mtrx, i, j, delta = 1, subdir = "test", name = "picture
      
      cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subdir, "/", name, "_*.png"), paste0(subdir, "/", name, "_slow.gif"))
      system(cmnd)
-     
+
      cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 5", paste0(subdir, "/", name, "_*.png"), paste0(subdir, "/", name, "_fast.gif"))
      system(cmnd)
 
@@ -573,7 +573,7 @@ super_magic_wang <- function() {
    area <- resize(area, k_resize)
    area <- draw_rect(area, c(1, 1), ncol(area), nrow(area), k_resize, k_resize, pen = 0)
    area <- add_frame(area, width = k_resize, pen = 2)
-   writePNG("05_circle_dfs.png", func = plot.image, c_xy = c(555, 600), arg_list = list(x = rotate(area), col = c("#000000", "#00FF00", "#FFFFFF"), axes = FALSE, main = "Ядро свертки"))
+   writePNG("05_circle_dfs.png", func = plot.image, c_xy = c(555, 600), arg_list = list(cex.main = 3, x = rotate(area), col = c("#000000", "#00FF00", "#FFFFFF"), axes = FALSE, main = "Граница разорванного круга"))
 
    k_resize <- 10
    crcl_ <- resize(crcl, coef = 10)
@@ -616,7 +616,7 @@ super_magic_wang <- function() {
    crcl_up_pic[4*k_resize, (8*k_resize):(10*k_resize)] <- 3
    crcl_up_pic[8*k_resize, (2*k_resize):(4*k_resize)] <- 3
    crcl_up_pic[8*k_resize, (8*k_resize):(10*k_resize)] <- 3
-   writePNG("11_circle_up_area.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_up_pic, width = k_resize)), col = c(crcl_up$col, "#FF0000"), axes = FALSE, main = "Разорванный круг\nуменьшенный в 2 раза"))
+   writePNG("11_circle_up_area.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_up_pic, width = k_resize)), col = c(crcl_up$col, "#FF0000"), axes = FALSE, main = "Восстановленный\nразорванный круг"))
    
    crcl_grid_sel <- crcl_grid
    crcl_grid_sel[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
@@ -631,7 +631,7 @@ super_magic_wang <- function() {
    crcl_grid_sel[4*k_resize, (8*k_resize):(10*k_resize)] <- 3
    crcl_grid_sel[8*k_resize, (2*k_resize):(4*k_resize)] <- 3
    crcl_grid_sel[8*k_resize, (8*k_resize):(10*k_resize)] <- 3
-   writePNG("12_circle_up_area_sel.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_grid_sel, width = k_resize)), col = c(crcl_up$col, "#FF0000"), axes = FALSE, main = "Разорванный круг\nс полученной маской"))
+   writePNG("12_circle_up_area_sel.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_grid_sel, width = k_resize)), col = c(crcl_up$col, "#FF0000"), axes = FALSE, main = "Разорванный круг\nс полученной границей"))
    
    crcl_grid_sel_fill <- crcl_grid_sel
    x <- crcl_grid_sel_fill[(4*k_resize):(8*k_resize), (2*k_resize):(10*k_resize)]
@@ -640,7 +640,7 @@ super_magic_wang <- function() {
    x <- crcl_grid_sel_fill[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)]
    x[x==0] <- 4
    crcl_grid_sel_fill[(2*k_resize):(10*k_resize),(4*k_resize):(8*k_resize)] <- x
-   writePNG("13_circle_up_area_sel_fill.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_grid_sel_fill, width = k_resize)), col = c(crcl_up$col, "#FF0000", "#00FF00"), axes = FALSE, main = "Разорванный круг\nс полученной маской"))
+   writePNG("13_circle_up_area_sel_fill.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1,1,7,1), x = rotate(add_frame(crcl_grid_sel_fill, width = k_resize)), col = c(crcl_up$col, "#FF0000", "#00FF00"), axes = FALSE, main = "Разорванный круг\nс полученной границей"))
 
    crcl_grid_sel_fill_full <- crcl_grid
    crcl_grid_sel_fill_full[(4*k_resize):(8*k_resize), 2*k_resize] <- 3
@@ -823,7 +823,7 @@ lection11.make <- function() {
      # unk_up <- subdir_exec("pic", subsampling, unk_down$mtrx, "Unknown", 2, downscale = FALSE)
      # writePNG("Unknown-up_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_up$pic, width = 10)), col = unk_up$col, axes = FALSE, main = "Выходная карта\nпризнаков для Unknown"))
      
-     # super_magic_wang()
+     super_magic_wang()
      
      return(NULL)
 }
