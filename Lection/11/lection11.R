@@ -9,16 +9,61 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 Sys.setlocale("LC_CTYPE", "russian")
 source("../png.R")
 
-g_mar <- c(0, 0, 5, 0)
 g_cex.main <- 4
-
-plot.set.par <- function(cex.main = g_cex.main, mar = g_mar) {
-     par(cex.main = cex.main, mar = mar)
-}
+g_mar = c(0, 0, 5, 0)
+g_font.size <- 14
 
 plot.image <- function(cex.main = g_cex.main, mar = g_mar, ...) {
-     plot.set.par(cex.main = cex.main, mar = mar)
+     par(cex.main = cex.main, mar = mar)
      do.call(image, list(...))
+}
+
+plot.image.proportional <- function(...) {
+    ret <- subdir_exec("pic", impl.plot.image.proportional, ...)
+    
+    return(ret)
+}
+
+# data <- list(pic = array(NA, c(1,1)), col = c(), png = "")
+# main <- list(png = "", title = "")
+# title <- list(png = "", height = 0)
+impl.plot.image.proportional <- function(data, main, use_title = FALSE, title = NA, cex.main = g_cex.main, ...) {
+     coef <- 1
+     c_xy <- rev(dim(data$pic))
+     c_xy_data <- coef * c_xy
+     while (min(c_xy_data) < 480) {
+          coef <- coef + 1  
+          c_xy_data <- coef * c_xy
+     }
+     c_xy <- c_xy_data
+     
+     if (!file.exists(main$png) || !use_title || is.na(title)) {
+          line_count = length(strsplit(main$title, "\n")[[1]])
+          mar <- rep(0, 4)
+          mar[3] <-  cex.main * line_count + 1
+          
+          title <- list(png = main$png, height = mar[3] * g_font.size)
+          c_xy[2] <- c_xy[2] + title$height
+          
+          # Save title separately
+          impl.writePNG(title$png, func = plot.image, c_xy = c_xy, arg_list = list(cex.main = cex.main, mar = mar, z=array(0, dim = c(1,1)), axes = FALSE, main = main$title))
+     } else {
+          c_xy[2] <- c_xy[2] + title$height
+     }
+     
+     png_titled <- array(data = NA, c(rev(c_xy) ,3))
+     # Load image with title
+     png_titled[,,] <- readPNG(title$png)
+     
+     # Save image with proportional size
+     impl.writePNG(data$png, func = plot.image, c_xy = c_xy_data, arg_list = list(cex.main = cex.main, mar = rep(0, 4), x = rotate(data$pic), col = data$col, axes = FALSE, main = NA))
+     
+     # Load saved image and join it with title
+     png_titled[(c_xy[2] - c_xy_data[2] + 1):c_xy[2],,] <- readPNG(data$png)
+     # Save resulted image
+     impl.writePNG(data$png, func = grid.raster, c_xy = c_xy, arg_list = list(png_titled))
+     
+     return(title)
 }
 
 rotate <- function(x) {
@@ -679,7 +724,7 @@ lection11.make <- function() {
    
      # Empty fild
      m <- matrix(data = 0, nrow = 12, ncol = 8)
-     
+
      # Letter A
      unk <- m
      unk[,1] <- 1
@@ -691,13 +736,18 @@ lection11.make <- function() {
      unk[9,] <- 1
      unk[10,] <- 1
      unk[11,] <- 1
+     
      unk_f <- add_frame(unk)
      writePNG("01_unk.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква ?"))
+
+     title = plot.image.proportional(data = list(pic = unk_f, col = c("#FFFFFF", "#000000"), png = "01_unk_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
      
      unk_grid <- resize(unk, k_resize)
      unk_grid <- draw_rect(unk_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
      unk_grid <- add_frame(unk_grid, width = k_resize)
      writePNG("01_unk_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква ?"))
+     
+     title = plot.image.proportional(data = list(pic = unk_grid, col = c("#FFFFFF", "#000000", "#0000FF"), png = "01_unk_grid_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
      
      # Letter A
      a <- m
