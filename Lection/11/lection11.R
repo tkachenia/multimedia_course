@@ -765,7 +765,7 @@ lection11.make <- function() {
      writePNG("01_A.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(a_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква А"))
 
      a_grid <- resize(a, k_resize)
-     a_grid <- draw_rect(a_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+     a_grid <- draw_rect(a_grid, c(1, 1), ncol(a)*k_resize, nrow(a)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
      a_grid <- add_frame(a_grid, width = k_resize)
      writePNG("01_A_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(a_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква А"))
      
@@ -783,7 +783,7 @@ lection11.make <- function() {
      writePNG("01_E.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(e_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква Е"))
 
      e_grid <- resize(e, k_resize)
-     e_grid <- draw_rect(e_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+     e_grid <- draw_rect(e_grid, c(1, 1), ncol(e)*k_resize, nrow(e)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
      e_grid <- add_frame(e_grid, width = k_resize)
      writePNG("01_E_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(e_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква Е"))
      
@@ -800,8 +800,8 @@ lection11.make <- function() {
      o_f <- add_frame(o)
      writePNG("01_O.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(o_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква О"))
 
-     o_grid <- resize(unk, k_resize)
-     o_grid <- draw_rect(o_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
+     o_grid <- resize(o, k_resize)
+     o_grid <- draw_rect(o_grid, c(1, 1), ncol(o)*k_resize, nrow(o)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
      o_grid <- add_frame(o_grid, width = k_resize)
      writePNG("01_O_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(o_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква О"))
      
