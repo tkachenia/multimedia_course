@@ -18,8 +18,8 @@ plot.image <- function(cex.main = g_cex.main, mar = g_mar, ...) {
      do.call(image, list(...))
 }
 
-plot.image.proportional <- function(...) {
-    ret <- subdir_exec("pic", impl.plot.image.proportional, ...)
+plot.image.proportional.pic <- function(...) {
+    ret <- subdir_exec("pic", impl.plot.image.proportional.smooth, ...)
     
     return(ret)
 }
@@ -27,7 +27,7 @@ plot.image.proportional <- function(...) {
 # data <- list(pic = array(NA, c(1,1)), col = c(), png = "")
 # main <- list(png = "", title = "")
 # title <- list(png = "", height = 0)
-impl.plot.image.proportional <- function(data, main, use_title = FALSE, title = NA, cex.main = g_cex.main, ...) {
+impl.plot.image.proportional.smooth <- function(data, main, use_title = FALSE, title = NA, cex.main = g_cex.main, ...) {
      coef <- 1
      c_xy <- rev(dim(data$pic))
      c_xy_data <- coef * c_xy
@@ -64,6 +64,34 @@ impl.plot.image.proportional <- function(data, main, use_title = FALSE, title = 
      impl.writePNG(data$png, func = grid.raster, c_xy = c_xy, arg_list = list(png_titled))
      
      return(title)
+}
+
+plot.image.proportional.subdir <- function(subdir, ...) {
+   ret <- subdir_exec(subdir, plot.image.proportional, ...)
+   
+   return(ret)
+}
+
+plot.image.proportional <- function(pic, col, png_name, data, main = NA, cex.main = g_cex.main) {
+   coef <- 1
+   c_xy_orig <- rev(dim(pic))
+   c_xy <- coef * c_xy_orig
+   while (max(c_xy) < 500) {
+      coef <- coef + 1  
+      c_xy <- coef * c_xy_orig
+   }
+   c_xy <- c_xy + 1 # axes
+   
+   mar <- rep(0, 4)
+   if (!is.na(main)) {
+      line_count = length(strsplit(main, "\n")[[1]])
+      mar[3] <-  cex.main * line_count + 1
+      c_xy[2] <- c_xy[2] + mar[3] * g_font.size
+   }
+   
+   impl.writePNG(png_name, func = plot.image, c_xy = c_xy, arg_list = list(x = rotate(pic), col = col, axes = FALSE, main = main, cex.main = cex.main, mar = mar))
+
+   return(NULL)
 }
 
 rotate <- function(x) {
@@ -740,14 +768,16 @@ lection11.make <- function() {
      unk_f <- add_frame(unk)
      writePNG("01_unk.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква ?"))
 
-     title = plot.image.proportional(data = list(pic = unk_f, col = c("#FFFFFF", "#000000"), png = "01_unk_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
+     title = plot.image.proportional.pic(data = list(pic = unk_f, col = c("#FFFFFF", "#000000"), png = "01_unk_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
+     plot.image.proportional.subdir("pic", pic = unk_f, col = c("#FFFFFF", "#000000"), png_name = "01_unk_alt_1.png", main = "Буква ?", cex.main = 4)
      
      unk_grid <- resize(unk, k_resize)
      unk_grid <- draw_rect(unk_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
      unk_grid <- add_frame(unk_grid, width = k_resize)
      writePNG("01_unk_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква ?"))
      
-     title = plot.image.proportional(data = list(pic = unk_grid, col = c("#FFFFFF", "#000000", "#0000FF"), png = "01_unk_grid_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
+     title = plot.image.proportional.pic(data = list(pic = unk_grid, col = c("#FFFFFF", "#000000", "#0000FF"), png = "01_unk_grid_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
+     plot.image.proportional.subdir("pic", pic = unk_grid, col = c("#FFFFFF", "#000000", "#0000FF"), png_name = "01_unk_grid_alt_1.png", main = "Буква ?", cex.main = 4)
      
      # Letter A
      a <- m
