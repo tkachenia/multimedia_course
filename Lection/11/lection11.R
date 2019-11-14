@@ -9,89 +9,63 @@ setwd(dirname(rstudioapi::getActiveDocumentContext()$path))
 Sys.setlocale("LC_CTYPE", "russian")
 source("../png.R")
 
+g_bin.path <- "C:/Program Files"
 g_cex.main <- 4
 g_mar = c(0, 0, 5, 0)
 g_font.size <- 14
+
+add.quote <- function(str) {
+     str <- paste0('"', str, '"')
+     
+     return(str)
+}
 
 plot.image <- function(cex.main = g_cex.main, mar = g_mar, ...) {
      par(cex.main = cex.main, mar = mar)
      do.call(image, list(...))
 }
 
-plot.image.proportional.pic <- function(...) {
-    ret <- subdir_exec("pic", impl.plot.image.proportional.smooth, ...)
-    
-    return(ret)
-}
-
-# data <- list(pic = array(NA, c(1,1)), col = c(), png = "")
-# main <- list(png = "", title = "")
-# title <- list(png = "", height = 0)
-impl.plot.image.proportional.smooth <- function(data, main, use_title = FALSE, title = NA, cex.main = g_cex.main, ...) {
-     coef <- 1
-     c_xy <- rev(dim(data$pic))
-     c_xy_data <- coef * c_xy
-     while (min(c_xy_data) < 480) {
-          coef <- coef + 1  
-          c_xy_data <- coef * c_xy
-     }
-     c_xy <- c_xy_data
-     
-     if (!file.exists(main$png) || !use_title || is.na(title)) {
-          line_count = length(strsplit(main$title, "\n")[[1]])
-          mar <- rep(0, 4)
-          mar[3] <-  cex.main * line_count + 1
-          
-          title <- list(png = main$png, height = mar[3] * g_font.size)
-          c_xy[2] <- c_xy[2] + title$height
-          
-          # Save title separately
-          impl.writePNG(title$png, func = plot.image, c_xy = c_xy, arg_list = list(cex.main = cex.main, mar = mar, z=array(0, dim = c(1,1)), axes = FALSE, main = main$title))
-     } else {
-          c_xy[2] <- c_xy[2] + title$height
-     }
-     
-     png_titled <- array(data = NA, c(rev(c_xy) ,3))
-     # Load image with title
-     png_titled[,,] <- readPNG(title$png)
-     
-     # Save image with proportional size
-     impl.writePNG(data$png, func = plot.image, c_xy = c_xy_data, arg_list = list(cex.main = cex.main, mar = rep(0, 4), x = rotate(data$pic), col = data$col, axes = FALSE, main = NA))
-     
-     # Load saved image and join it with title
-     png_titled[(c_xy[2] - c_xy_data[2] + 1):c_xy[2],,] <- readPNG(data$png)
-     # Save resulted image
-     impl.writePNG(data$png, func = grid.raster, c_xy = c_xy, arg_list = list(png_titled))
-     
-     return(title)
-}
-
 plot.image.proportional.subdir <- function(subdir, ...) {
-   ret <- subdir_exec(subdir, plot.image.proportional, ...)
-   
-   return(ret)
+     ret <- subdir_exec(subdir, plot.image.proportional, ...)
+     
+     return(ret)
 }
 
-plot.image.proportional <- function(pic, col, png_name, data, main = NA, cex.main = g_cex.main) {
-   coef <- 1
-   c_xy_orig <- rev(dim(pic))
-   c_xy <- coef * c_xy_orig
-   while (max(c_xy) < 500) {
-      coef <- coef + 1  
-      c_xy <- coef * c_xy_orig
-   }
-   c_xy <- c_xy + 1 # axes
-   
-   mar <- rep(0, 4)
-   if (!is.na(main)) {
-      line_count = length(strsplit(main, "\n")[[1]])
-      mar[3] <-  cex.main * line_count + 1
-      c_xy[2] <- c_xy[2] + mar[3] * g_font.size
-   }
-   
-   impl.writePNG(png_name, func = plot.image, c_xy = c_xy, arg_list = list(x = rotate(pic), col = col, axes = FALSE, main = main, cex.main = cex.main, mar = mar))
-
-   return(NULL)
+plot.image.proportional <- function(png_name, pic, col, max_xy = 500, main = NA, cex.main = g_cex.main) {
+     coef <- 1
+     c_xy_orig <- rev(dim(pic))
+     c_xy <- coef * c_xy_orig
+     while (max(c_xy) < max_xy) {
+          coef <- coef + 1
+          c_xy <- coef * c_xy_orig
+     }
+     c_xy <- c_xy + 1 # axes
+     
+     mar <- rep(0, 4)
+     if (!is.na(main)) {
+        line_count = length(strsplit(main, "\n")[[1]])
+        mar[3] <-  cex.main * line_count + 1
+        c_xy[2] <- c_xy[2] + mar[3] * g_font.size
+     }
+      
+     splice <- c(0, 0)
+     if (c_xy[1] %% 2 == 1) {
+        splice[1] <- 1
+     }
+     if (c_xy[2] %% 2 == 1) {
+        splice[2] <- 1
+     }
+          
+     impl.writePNG(png_name, func = plot.image, c_xy = c_xy, arg_list = list(x = rotate(pic), col = col, axes = FALSE, main = main, cex.main = cex.main, mar = mar))
+     if (any(splice != 0)) {
+          png_orig_name <- paste(strsplit(png_name, ".", fixed = TRUE)[[1]], collapse = "_orig.")
+          file.rename(png_name, png_orig_name)
+          
+          cmnd <- paste(add.quote(paste0(g_bin.path, "/ImageMagick/convert.exe")), add.quote(png_orig_name), "-background white", sprintf("-splice %dx%d", splice[1], splice[2]), add.quote(png_name))
+          system(cmnd)
+     }
+     
+     return(NULL)
 }
 
 rotate <- function(x) {
@@ -194,7 +168,7 @@ draw_rect <- function(mtrx, up_left = c(1, 1), width, height, sub.width = width,
      return(mtrx)
 }
 
-convolution <- function(ltr, krnl, str_ltr) {
+convolution <- function(ltr, krnl, subDir, append_title_single = " для\nнеизвестной буквы", append_title_joined = append_title_single) {
      if (any(sort(unique(as.vector(ltr))) != c(0, 1))) {
           warning("Letter matrix must consists of only 0 and 1")
           return(NULL)
@@ -205,7 +179,7 @@ convolution <- function(ltr, krnl, str_ltr) {
      }
      
      mainDir <- getwd()
-     subDir <- str_ltr
+     subDir <- subDir
      
      if (!file.exists(subDir))
           dir.create(file.path(mainDir, subDir))
@@ -229,13 +203,16 @@ convolution <- function(ltr, krnl, str_ltr) {
      gif.all <- array(0, c(3*nrow(gif.pic), 3*ncol(gif.pic), nrow(ltr)*ncol(ltr)))
      gif.ind <- 1
      
+     idx <- 0
      for (i in 1:(nrow(ltrf)-2)) {
           for (j in 1:(ncol(ltrf)-2)) {
+               idx <- idx + 1
+             
                kernel_1 <- draw_rect(ltrfr, c((j-1)*k_resize+1, (i-1)*k_resize+1), 3*k_resize, 3*k_resize, 1*k_resize, 1*k_resize, pen = pen[length(pen)-1])
                kernel_2 <- draw_rect(kernel_1, c((j-1)*k_resize+1, i*k_resize), 3*k_resize, 1*k_resize+1, 1*k_resize, 1*k_resize+1, pen = pen[length(pen)])
              
-               png_name_left <- paste0(str_ltr, "-kl_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
-               impl.writePNG(png_name_left, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(kernel_2), col = col, axes = FALSE, main = paste("Свертка с ядром\nдля ", str_ltr)))
+               png_name_left <- paste0(subDir, "-kl_", sprintf("%03d", idx), ".png")
+               plot.image.proportional(png_name_left, kernel_2, col, main = paste0("Свертка с ядром", append_title_single), cex.main = 3)
                
                #  ----------
                
@@ -249,68 +226,97 @@ convolution <- function(ltr, krnl, str_ltr) {
                rect <- get_rect(i, j, k_resize, shift = 0)
                feature_2 <- draw_rect(feature_1, c(rect$x, rect$y), rect$width, rect$height, rect$width, rect$height, pen = pen[length(pen)])
                
-               png_name_right <- paste0(str_ltr, "-fm_i", sprintf("%02d", i), "_j", sprintf("%02d", j), ".png")
-               impl.writePNG(png_name_right, func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(feature_2), col = col, axes = FALSE, main = paste("Карта признаков\nдля", str_ltr)))
+               png_name_right <- paste0(subDir, "-fm_", sprintf("%03d", idx), ".png")
+               plot.image.proportional(png_name_right, feature_2, col, main = paste0("Карта признаков", append_title_single), cex.main = 3)
 
                #  ----------
                
-               # Join 2 matrix
+               # 1. Join 2 matrix (single main title)
                gif.pic <- cbind(kernel_2, matrix(0, nrow = nrow(gif.pic), ncol = k_resize), feature_2)
                gif.all[,,gif.ind] <- resize(gif.pic, 3)
                gif.ind <- gif.ind + 1
                
-               png_name_1st_approach <- paste0(str_ltr, "_1(i=", sprintf("%02d", i), ",j=", sprintf("%02d", j), ").png")
-               impl.writePNG(png_name_1st_approach, func = plot.image, c_xy = c(960, 640), arg_list = list(cex.main = 4, mar = c(1, 1, 4, 1), x = rotate(gif.pic), col = col, axes = FALSE, main = paste("Свертка для буквы", str_ltr)))
+               png_name_1st_approach <- paste0(subDir, "_1_", sprintf("%03d", idx), ".png")
+               plot.image.proportional(png_name_1st_approach, gif.pic, col, max_xy = 900, main = paste0("Свертка ", append_title_joined), cex.main = 4)
 
-               # Join 2 PNG and plot RGB
-               png_name_2nd_approach <- paste0(str_ltr, "_2(i=", sprintf("%02d", i), ",j=", sprintf("%02d", j), ").png")
-               png_joined <- array(data = NA, c(640, 960 ,3))
-               png_joined[,1:480,] <- readPNG(png_name_left)
-               png_joined[,481:960,] <- readPNG(png_name_right)
-               impl.writePNG(png_name_2nd_approach, func = grid.raster, c_xy = c(960, 640), arg_list = list(png_joined))
+               # 2. Join 2 PNG (separate main titles)
+               png_name_2nd_approach <- paste0(subDir, "_2_", sprintf("%03d", idx), ".png")
+               cmnd <- paste(add.quote(paste0(g_bin.path, "/ImageMagick/montage.exe")), "-geometry +0+0", add.quote(png_name_left), add.quote(png_name_right), add.quote(png_name_2nd_approach))
+               system(cmnd)
+
+               # Read and hstack raw RGB data #
                
-               # Raster approach
+               # png_left <- readPNG(png_name_left)
+               # png_right <- readPNG(png_name_right)
+               # if (!all(dim(png_left) == dim(png_right))) {
+               #    warning("Can not concat pictures with different dimentions")
+               #    return(NULL)
+               # }
+               # 
+               # row_fixed <- dim(png_left)[1]
+               # col_single <- dim(png_left)[2]
+               # col_joined <- 2 * col_single
+               # 
+               # c_xy_single <- c(col_single, row_fixed)
+               # c_xy_joined <- c(col_joined, row_fixed)
+               # 
+               # # 3. Join 2 PNG and plot RGB
+               # png_joined_dim <- dim(png_left)
+               # png_joined_dim[2] <- 2 * png_joined_dim[2]
+               # png_joined <- array(data = NA, png_joined_dim)
+               # png_joined[,1:col_single,] <- png_left
+               # png_joined[,(col_single+1):col_joined,] <- png_right
+               # png_name_3rd_approach <- paste0(subDir, "_3_", sprintf("%03d", idx), ".png")
+               # impl.writePNG(png_name_3rd_approach, func = grid.raster, c_xy = c_xy_joined, arg_list = list(png_joined))
+               
+               # Raster approach #
                # Add additional margin to resulted png
                # https://gis.stackexchange.com/questions/207477/r-export-raster-to-png-without-margin
                # https://stackoverflow.com/questions/27800307/adding-a-picture-to-plot-in-r
 
-               # Raster 3
-               # png_name_3nd_approach <- paste0(str_ltr, "_3(i=", sprintf("%02d", i), ",j=", sprintf("%02d", j), ").png")
-               # png(png_name_3nd_approach, 960, 640)
+               # 4. Raster 1 
+               # png_name_4th_approach <- paste0(subDir, "_4_", sprintf("%03d", idx), ".png")
+               # png(png_name_4th_approach, col_joined, row_fixed)
                # par(mai = c(0, 0, 0, 0), mar = c(0, 0, 0, 0)) # no margins
                # 
-               # plot(c(0, 960), c(0, 640), type = "n", xlab = "", ylab = "")
-               # rasterImage(readPNG(png_name_left), 0, 0, 480, 640, mai = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
-               # rasterImage(readPNG(png_name_right), 480, 0, 960, 640, mai = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
+               # plot(c(0, col_joined), c(0, row_fixed), type = "n", xlab = "", ylab = "")
+               # rasterImage(png_left, 0, 0, col_single, row_fixed, mai = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
+               # rasterImage(png_right, col_single, 0, col_joined, row_fixed, mai = c(0, 0, 0, 0), mar = c(0, 0, 0, 0))
                # 
                # dev.off()
 
-               # Raster 4
-               # png_name_4nd_approach <- paste0(str_ltr, "_4(i=", sprintf("%02d", i), ",j=", sprintf("%02d", j), ").png")
-               # png(png_name_4nd_approach, 960, 640)
+               # 5. Raster 2
+               # png_name_5th_approach <- paste0(subDir, "_5_", sprintf("%03d", idx), ".png")
+               # png(png_name_5th_approach, col_joined, row_fixed)
                # par(mai = c(0, 0, 0, 0), mar = c(0, 0, 0, 0)) # no margins
                # 
                # layout(matrix(1:2, ncol=2, byrow=TRUE)) # layout the plots into a matrix 2 columns, by row
                # 
                # plot.new() # same as plot(NA, xlim=0:1, ylim=0:1, main = NA, sub = NA, xlab = NA, ylab = NA, xaxt="n", yaxt="n", bty="n")
-               # rasterImage(readPNG(png_name_left), 0, 0, 1, 1)
+               # rasterImage(png_left, 0, 0, 1, 1)
                # 
                # plot.new() # same as plot(NA, xlim=0:1, ylim=0:1, main = NA, sub = NA, xlab = NA, ylab = NA, xaxt="n", yaxt="n", bty="n")
-               # rasterImage(readPNG(png_name_right), 0, 0, 1, 1)
+               # rasterImage(png_right, 0, 0, 1, 1)
                # 
                # dev.off()
           }
      }
      
-     # Make GIF from raw matrix data
-     gif.col <- c(col, rep("#FFFFFF", times = 256-length(col)))
-     write.gif(gif.all, paste0(str_ltr, "-0.gif"), col = gif.col, delay = 30)
+     # Make GIF from raw matrix data #
      
-     # Make GIF from png files
-     cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(str_ltr, "_1*.png"), paste0(str_ltr, "-1.gif"))
-     system(cmnd)
+     # gif.col <- c(col, rep("#FFFFFF", times = 256-length(col)))
+     # write.gif(gif.all, paste0(subDir, "-0.gif"), col = gif.col, delay = 30)
      
-     cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(str_ltr, "_2*.png"), paste0(str_ltr, "-2.gif"))
+     # Make GIF from png files #
+     
+     # cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subDir, "_1*.png"), paste0(subDir, "-1.gif"))
+     # system(cmnd)
+     # 
+     # cmnd <- paste('"C:/Program Files/ImageMagick/convert.exe\"', "-delay 30", paste0(subDir, "_2*.png"), paste0(subDir, "-2.gif"))
+     # system(cmnd)
+     
+     # Make MP4 Video #
+     cmnd <- paste(add.quote(paste0(g_bin.path, "/ffmpeg/bin/ffmpeg.exe")), "-y", "-r 6", "-start_number 0", "-i", add.quote(paste0(subDir, "_1_%03d.png")), "-c:v libx264", '-vf "fps=25,format=yuv420p"', add.quote(paste0(subDir, "-1.mp4")))
      system(cmnd)
      
      setwd(mainDir)
@@ -767,17 +773,13 @@ lection11.make <- function() {
      
      unk_f <- add_frame(unk)
      writePNG("01_unk.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_f), col = c("#FFFFFF", "#000000"), axes = FALSE, main = "Буква ?"))
-
-     title = plot.image.proportional.pic(data = list(pic = unk_f, col = c("#FFFFFF", "#000000"), png = "01_unk_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
-     plot.image.proportional.subdir("pic", pic = unk_f, col = c("#FFFFFF", "#000000"), png_name = "01_unk_alt_1.png", main = "Буква ?", cex.main = 4)
+     plot.image.proportional.subdir("pic", "01_unk_alt.png", unk_f, c("#FFFFFF", "#000000"), main = "Буква ?", cex.main = 4)
      
      unk_grid <- resize(unk, k_resize)
      unk_grid <- draw_rect(unk_grid, c(1, 1), ncol(unk)*k_resize, nrow(unk)*k_resize, 1*k_resize, 1*k_resize, pen = 2)
      unk_grid <- add_frame(unk_grid, width = k_resize)
      writePNG("01_unk_grid.png", func = plot.image, c_xy = c(480, 640), arg_list = list(x = rotate(unk_grid), col = c("#FFFFFF", "#000000", "#0000FF"), axes = FALSE, main = "Буква ?"))
-     
-     title = plot.image.proportional.pic(data = list(pic = unk_grid, col = c("#FFFFFF", "#000000", "#0000FF"), png = "01_unk_grid_alt.png"), main = list(png = "title.png", title = "Буква ?"), cex.main = 4)
-     plot.image.proportional.subdir("pic", pic = unk_grid, col = c("#FFFFFF", "#000000", "#0000FF"), png_name = "01_unk_grid_alt_1.png", main = "Буква ?", cex.main = 4)
+     plot.image.proportional.subdir("pic", "01_unk_grid_alt.png", unk_grid, c("#FFFFFF", "#000000", "#0000FF"), main = "Буква ?", cex.main = 4)
      
      # Letter A
      a <- m
@@ -853,10 +855,12 @@ lection11.make <- function() {
      kernel_r10_grid_red <- draw_rect(kernel_r10_grid, c(1, 10), 30, 11, 10, 11, pen = 2)
      kernel_r10_grid_red_f5 <- add_frame(kernel_r10_grid_red, width = 5)
      writePNG("02_kernel.png", func = plot.image, c_xy = c(500, 500), arg_list = list(x = rotate(kernel_r10_grid_red_f5), col = c("#FFFFFF", "#000000", "#FF0000"), axes = FALSE, main = "Ядро свертки"))
-
+     plot.image.proportional.subdir("pic", "02_kernel_alt.png", kernel_r10_grid_red_f5, c("#FFFFFF", "#000000", "#FF0000"), main = "Ядро свертки", cex.main = 4)
+     
      # Convolution
-     unk_fm <- subdir_exec("pic", convolution, unk, kernel, "Unknown")
+     unk_fm <- subdir_exec("pic", convolution, unk, kernel, "Unknown", append_title_single = " для\nнеизвестной буквы", append_title_joined = " для неизвестной буквы")
      writePNG("03_Unknown-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(unk_fm$pic, width = 10)), col = unk_fm$col, axes = FALSE, main = "Карта признаков\nдля Unknown"))
+     plot.image.proportional.subdir("pic", "03_Unknown-fm_final_alt.png", add_frame(unk_fm$pic, width = 10), unk_fm$col, main = "Карта признаков для\nнеизвестной буквы", cex.main = 3)
      
      a_fm <- subdir_exec("pic", convolution, a, kernel, "A")
      writePNG("03_A-fm_final.png", func = plot.image, c_xy = c(480, 640), arg_list = list(cex.main = 3, mar = c(1, 1, 7, 1), x = rotate(add_frame(a_fm$pic, width = 10)), col = a_fm$col, axes = FALSE, main = "Карта признаков\nдля буквы А"))
