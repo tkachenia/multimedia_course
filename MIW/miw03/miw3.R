@@ -71,7 +71,7 @@ getFieldsUpdate <- function(fields, idx, idxError) {
       if (!any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) break
       if (floor(rowSize) != ceiling(rowSize)) break
    }
-   biHeight    <- sample(-768:768, 1)
+   biHeight    <- sample(-768:0, 1)
    if (biHeight == 0) biHeight <- 1
    biSizeImage <- 4*ceiling(rowSize)*abs(biHeight)
    bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"])
