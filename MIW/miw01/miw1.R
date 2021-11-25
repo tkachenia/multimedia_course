@@ -76,5 +76,5 @@ miw1.make <- function(count, train = F) {
    NULL
 }
 
-# set.seed(42)
+set.seed(20210929)
 miw1.make(50)
