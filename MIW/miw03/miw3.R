@@ -135,8 +135,8 @@ miw3.make <- function(count, train = F, exam = F) {
       if (exam) {
          text <- paste0(text, "Вариант:\t", paste(year, 2*i - 1, sep="_"), "\n")
          text <- paste0(text, "Данные:\n")
-         for (i in (1:length(data_1))) {
-            text <- paste0(text, data_1[i], "\n")
+         for (j in (1:length(data_1))) {
+            text <- paste0(text, data_1[j], "\n")
          }
          text <- paste0(text, "bfSize:\nabs(biHeight):\nМетодан. верны: да/нет (почему)?\n")
          text <- paste0(text, "Ответ:\t", getValue(fields_1$field["bfSize"]), ", ",
@@ -145,8 +145,8 @@ miw3.make <- function(count, train = F, exam = F) {
          
          text <- paste0(text, "Вариант:\t", paste(year, 2*i, sep="_"), "\n")
          text <- paste0(text, "Данные:\n")
-         for (i in (1:length(data_2))) {
-            text <- paste0(text, data_2[i], "\n")
+         for (j in (1:length(data_2))) {
+            text <- paste0(text, data_2[j], "\n")
          }
          text <- paste0(text, "bfSize:\nabs(biHeight):\nМетодан. верны: да/нет (почему)?\n")
          text <- paste0(text, "Ответ:\t", getValue(fields_2$field["bfSize"]), ", ",
@@ -162,10 +162,10 @@ miw3.make <- function(count, train = F, exam = F) {
          text <- paste0(text,
                         "Данные\t", data_1[1], "\t", "\t",
                         "Данные\t", data_2[1], "\t", "\t", "\n")
-         for (i in (2:length(data_1))) {
+         for (j in (2:length(data_1))) {
             text <- paste0(text,
-                           "\t", data_1[i], "\t", "\t",
-                           "\t", data_2[i], "\t", "\t", "\n")
+                           "\t", data_1[j], "\t", "\t",
+                           "\t", data_2[j], "\t", "\t", "\n")
          }
          text <- paste0(text,
                         "bfSize:\t", "\t", getValue(fields_1$field["bfSize"]), "\t",

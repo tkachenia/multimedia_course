@@ -151,10 +151,10 @@ miw2.make <- function(count, train = F, exam = F) {
          text <- paste0(text,
                         "Данные\t", data_1[1], "\t", "\t",
                         "Данные\t", data_2[1], "\t", "\t", "\n")
-         for (i in (2:length(data_1))) {
+         for (j in (2:length(data_1))) {
             text <- paste0(text,
-                           "\t", data_1[i], "\t", "\t",
-                           "\t", data_2[i], "\t", "\t", "\n")
+                           "\t", data_1[j], "\t", "\t",
+                           "\t", data_2[j], "\t", "\t", "\n")
          }
          text <- paste0(text,
                         "SampleRate:\t", "\t", getValue(fields_1$field["SampleRate"]), "\t",
