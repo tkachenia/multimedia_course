@@ -18,7 +18,7 @@ getFields <- function() {
    fields["biWidth"]         <- NA
    fields["biHeight"]        <- NA
    fields["biPlanes"]        <- makeField(1, bytesCount = 2)
-   fields["biBitCount"]      <- makeField(3*c(8, 16, 24, 32), bytesCount = 2)
+   fields["biBitCount"]      <- makeField(24, bytesCount = 2)
    fields["biCompression"]   <- makeField(0)
    fields["biSizeImage"]     <- NA
    fields["biXPelsPerMeter"] <- makeField(0)
@@ -28,16 +28,18 @@ getFields <- function() {
    
    tags <- as.vector(c("bfType", "bfSize", "bfReserved1", "bfReserved2", "bfOffBits",
                        "biSize", "biWidth", "biHeight", "biPlanes", "biBitCount", "biCompression", "biSizeImage",
-                          "biXPelsPerMeter", "biYPelsPerMeter", "biClrUsed", "biClrImportant"))
+                       "biXPelsPerMeter", "biYPelsPerMeter", "biClrUsed", "biClrImportant"))
    
    list(field = fields, tag = tags)
 }
 
 getErrorIdx <- function(fields, train = F) {
-   idxError <- sample(1:(length(fields$tag) - 4), 1)
+   tagError <- c("bfType", "bfSize", "bfReserved1", "bfReserved2", "bfOffBits",
+                 "biSize", "biPlanes", "biBitCount", "biSizeImage")
+   idxError <- sample(which(fields$tag %in% tagError), 1)
    if (!train) {
       # 0  - No error
-      idxError <- sample(c(0, which(fields$tag %in% c("bfSize", "biSizeImage"))), 1)
+      idxError <- sample(c(0, which(fields$tag %in% c("biSizeImage"))), 1)
    }
    
    idxError
@@ -50,31 +52,32 @@ getValue <- function(field, idx = 1) {
    as.integer(name)
 }
 
+# If field has set of possible values, sample single one from the set
 getSampleIdx <- function(fields, idxError) {
+   # bfType field only
    idxbfType     <- sample(1:length(fields$field["bfType"][[1]]), 1)
-   idxbiBitCount <- sample(1:length(fields$field["biBitCount"][[1]]), 1)
-
-   if (getValue(fields$field["biBitCount"], idxbiBitCount) == 3*32 && any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) {
-      idxbiBitCount <- 3
-   }
    
-   list(bfType = idxbfType, biBitCount = idxbiBitCount)
+   list(bfType = idxbfType)
 }
 
 getFieldsUpdate <- function(fields, idx, idxError) {
+   # get single value from a set (bfType field only)
    fields$field["bfType"] <- list(fields$field["bfType"][[1]][idx$bfType])
-   fields$field["biBitCount"]  <- list(fields$field["biBitCount"][[1]][idx$biBitCount])
    
+   rowSize <- NA
+   padding <- NA
+   
+   biWidth <- NA
    while(T) {
       biWidth <- sample(1:1024, 1)
-      rowSize <- ((getValue(fields$field["biBitCount"])/8)*biWidth)/4
-      if (!any(idxError == which(fields$tag %in% c("bfSize", "biSizeImage")))) break
-      if (floor(rowSize) != ceiling(rowSize)) break
+      rowSize <- (getValue(fields$field["biBitCount"]) %/% 8) * biWidth
+      padding = 4 - (rowSize %% 4)
+      if (padding %in% c(1, 2, 3)) break
    }
-   biHeight    <- sample(-768:768, 1)
-   if (biHeight == 0) biHeight <- 1
-   biSizeImage <- 4*ceiling(rowSize)*abs(biHeight)
-   bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"])
+   biHeight    <- sample(-1024:-1, 1)
+
+   biSizeImage <- (rowSize + padding)*abs(biHeight)
+   bfSize      <- getValue(fields$field["bfOffBits"]) + biSizeImage
 
    fields$field["bfSize"]      <- makeField(bfSize)
    fields$field["biWidth"]     <- makeField(biWidth)
@@ -87,17 +90,20 @@ getFieldsUpdate <- function(fields, idx, idxError) {
 getFieldsError <- function (fields, idxError, prefix = "", train = F) {
    if (idxError == 0) return(fields)
    
-   if (!train) {
-      biSizeImage <- (getValue(fields$field["biBitCount"])/8)*getValue(fields$field["biWidth"])*abs(getValue(fields$field["biHeight"]))
-      bfSize      <- biSizeImage + 14 + getValue(fields$field["biSize"])
-      fields$field[fields$tag[idxError]] <- makeField(if (fields$tag[idxError] == "biSizeImage") biSizeImage else bfSize)
+   fieldName  <- fields$tag[idxError]
+   if (fields$tag[idxError] %in% c("bfType")) {
+      fieldErrorValue <- sample(c("MB", "AB", "II", "PC", "CC", "TP"), 1)
+      fields$field[fieldName] <- makeField(fieldErrorValue)
    } else {
       error <- sample(1:254, 1)
-      strHex <- fields$field[fields$tag[idxError]][[1]][[1]]
-      firstHexValue <- substring(strHex, nchar(prefix) + 1, nchar(prefix) + 2)
-      firstValue <- (strtoi(firstHexValue, base = 16) + error) %% 255
-      newFirstHexValue <- hexInt(firstValue, bytesCount = 1, prefix = prefix)
-      substring(fields$field[fields$tag[idxError]][[1]][[1]], nchar(prefix) + 1, nchar(prefix) + 2) <- newFirstHexValue
+      fieldValue <- getValue(fields$field[fieldName])
+      fieldErrorValue <- fieldValue + error
+      
+      if (fields$tag[idxError] %in% c("bfReserved1", "bfReserved2", "biPlanes", "biBitCount")) {
+         fields$field[fieldName] <- makeField(fieldErrorValue, bytesCount = 2)
+      } else {
+         fields$field[fieldName] <- makeField(fieldErrorValue, bytesCount = 4)
+      }
    }
 
    fields
