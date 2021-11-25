@@ -31,7 +31,7 @@ getHexString <- function(hex_eng, eng_idx, hex_rus, rus_idx, idx) {
    substring(hexString, 2)
 }
 
-miw1.make <- function(count, train = F) {
+miw1.make <- function(count, train = F, exam = F) {
    eng <- "0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
    rus <- "абвгдеёжзийклмнопрстуфхцчшщъыьэюяАБВГДЕЁЖЗИЙКЛМНОПРСТУФХЦЧШЩЪЫЬЭЮЯ"
    
@@ -55,18 +55,34 @@ miw1.make <- function(count, train = F) {
          idx_2 <- c(2, 1, 3)
       }
       
-      text <- paste0(text,
-                     "ФИО\t", paste0(rep("\t", 5), collapse = ""), paste(year, 2*i - 1, sep="_"), "\t\t",
-                     "ФИО\t", paste0(rep("\t", 5), collapse = ""), paste(year, 2*i, sep="_"), "\n")
-      text <- paste0(text,
-                     "Группа\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[1]), "\t\t",
-                     "Группа\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[1]), "\n")
-      text <- paste0(text,
-                     paste(year, 2*i - 1, sep="_"), "\t", getHexString(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1), "\t", getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[2]), "\t\t",
-                     paste(year, 2*i, sep="_"), "\t", getHexString(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2), "\t", getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[2]), "\n")
-      text <- paste0(text,
-                     "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[3]), "\t\t",
-                     "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[3]), "\n")
+      if (exam) {
+         text <- paste0(text, "Вариант:\t", paste(year, 2*i - 1, sep="_"), "\n")
+         text <- paste0(text, "Данные:\t", getHexString(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1), "\n")
+         text <- paste0(text, "Текст UTF-8:\n")
+         text <- paste0(text, "Ответ:\t", getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[1]),
+                                          getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[2]),
+                                          getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[3]), "\n")
+         
+         text <- paste0(text, "Вариант:\t", paste(year, 2*i, sep="_"), "\n")
+         text <- paste0(text, "Данные:\t", getHexString(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2), "\n")
+         text <- paste0(text, "Текст UTF-8:\n")
+         text <- paste0(text, "Ответ:\t", getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[1]),
+                                          getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[2]),
+                                          getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[3]), "\n")
+      } else {
+         text <- paste0(text,
+                        "ФИО\t", paste0(rep("\t", 5), collapse = ""), paste(year, 2*i - 1, sep="_"), "\t\t",
+                        "ФИО\t", paste0(rep("\t", 5), collapse = ""), paste(year, 2*i, sep="_"), "\n")
+         text <- paste0(text,
+                        "Группа\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[1]), "\t\t",
+                        "Группа\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[1]), "\n")
+         text <- paste0(text,
+                        paste(year, 2*i - 1, sep="_"), "\t", getHexString(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1), "\t", getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[2]), "\t\t",
+                        paste(year, 2*i, sep="_"), "\t", getHexString(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2), "\t", getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[2]), "\n")
+         text <- paste0(text,
+                        "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_1, hex_rus, rus_idx_1, idx_1[3]), "\t\t",
+                        "Ответ\t", paste0(rep("\t", 5), collapse = ""), getLetter(hex_eng, eng_idx_2, hex_rus, rus_idx_2, idx_2[3]), "\n")
+      }
    }
    
    file <- file("miw1.txt", "w", encoding = "UTF-8")
@@ -77,4 +93,5 @@ miw1.make <- function(count, train = F) {
 }
 
 set.seed(20210929)
-miw1.make(50)
+miw1.make(60, train=F, exam=F)
+

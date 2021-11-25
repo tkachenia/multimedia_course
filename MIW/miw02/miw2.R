@@ -103,7 +103,7 @@ getData <- function(fields, value_count_in_line = 16, prefix = "") {
    data
 }
 
-miw2.make <- function(count, train = F) {
+miw2.make <- function(count, train = F, exam = F) {
    fields <- getFields()
    text <- ""
    year <- format(Sys.Date(), "%y")
@@ -121,32 +121,54 @@ miw2.make <- function(count, train = F) {
       fields_2 <- getFieldsError(fields_2, error_2, train = train)
       data_2   <- getData(fields_2)
 
-      text <- paste0(text,
-                     "ФИО\t", "\t", "\t",
-                     "ФИО\t", "\t", "\t", "\n")
-      text <- paste0(text,
-                     paste(year, 2*i - 1, sep="_"), "\t", "Группа\t", paste(year, 2*i - 1, sep="_"), "\t",
-                     paste(year, 2*i, sep="_"), "\t", "Группа\t", paste(year, 2*i, sep="_"), "\t", "\n")
-      text <- paste0(text,
-                     "Данные\t", data_1[1], "\t", "\t",
-                     "Данные\t", data_2[1], "\t", "\t", "\n")
-      for (i in (2:length(data_1))) {
-      text <- paste0(text,
-                     "\t", data_1[i], "\t", "\t",
-                     "\t", data_2[i], "\t", "\t", "\n")
+      if (exam) {
+         text <- paste0(text, "Вариант:\t", paste(year, 2*i - 1, sep="_"), "\n")
+         text <- paste0(text, "Данные:\n")
+         for (j in (1:length(data_1))) {
+            text <- paste0(text, data_1[j], "\n")
+         }
+         text <- paste0(text, "SampleRate:\nBitsPerSample:\nМетодан. верны: да/нет (почему)?\n")
+         text <- paste0(text, "Ответ:\t", getValue(fields_1$field["SampleRate"]), ", ",
+                                          getValue(fields_1$field["BitsPerSample"]), ", ",
+                                          (if (error_1 != 0) "Нет" else "Да"), " (", fields_1$tag[error_1], ")\n")
+         
+         text <- paste0(text, "Вариант:\t", paste(year, 2*i, sep="_"), "\n")
+         text <- paste0(text, "Данные:\n")
+         for (j in (1:length(data_2))) {
+            text <- paste0(text, data_2[j], "\n")
+         }
+         text <- paste0(text, "SampleRate:\nBitsPerSample:\nМетодан. верны: да/нет (почему)?\n")
+         text <- paste0(text, "Ответ:\t", getValue(fields_2$field["SampleRate"]), ", ",
+                                          getValue(fields_2$field["BitsPerSample"]), ", ",
+                                          (if (error_2 != 0) "Нет" else "Да"), " (", fields_2$tag[error_2], ")\n")
+      } else {
+         text <- paste0(text,
+                        "ФИО\t", "\t", "\t",
+                        "ФИО\t", "\t", "\t", "\n")
+         text <- paste0(text,
+                        paste(year, 2*i - 1, sep="_"), "\t", "Группа\t", paste(year, 2*i - 1, sep="_"), "\t",
+                        paste(year, 2*i, sep="_"), "\t", "Группа\t", paste(year, 2*i, sep="_"), "\t", "\n")
+         text <- paste0(text,
+                        "Данные\t", data_1[1], "\t", "\t",
+                        "Данные\t", data_2[1], "\t", "\t", "\n")
+         for (i in (2:length(data_1))) {
+            text <- paste0(text,
+                           "\t", data_1[i], "\t", "\t",
+                           "\t", data_2[i], "\t", "\t", "\n")
+         }
+         text <- paste0(text,
+                        "SampleRate:\t", "\t", getValue(fields_1$field["SampleRate"]), "\t",
+                        "SampleRate:\t", "\t", getValue(fields_2$field["SampleRate"]), "\t", "\n")
+         text <- paste0(text,
+                        "BitsPerSample:\t", "\t", getValue(fields_1$field["BitsPerSample"]), "\t",
+                        "BitsPerSample:\t", "\t", getValue(fields_2$field["BitsPerSample"]), "\n")
+         text <- paste0(text,
+                        "Методан. верны\t", "\t", (if (error_1 != 0) "Нет," else "Да"), "\t",
+                        "Методан. верны\t", "\t", (if (error_2 != 0) "Нет," else "Да"), "\t", "\n")
+         text <- paste0(text,
+                        "да/нет (почему)?\t", "\t", fields_1$tag[error_1], "\t",
+                        "да/нет (почему)?\t", "\t", fields_2$tag[error_2], "\t", "\n")
       }
-      text <- paste0(text,
-                     "SampleRate:\t", "\t", getValue(fields_1$field["SampleRate"]), "\t",
-                     "SampleRate:\t", "\t", getValue(fields_2$field["SampleRate"]), "\t", "\n")
-      text <- paste0(text,
-                     "BitsPerSample:\t", "\t", getValue(fields_1$field["BitsPerSample"]), "\t",
-                     "BitsPerSample:\t", "\t", getValue(fields_2$field["BitsPerSample"]), "\n")
-      text <- paste0(text,
-                     "Методан. верны\t", "\t", (if (error_1 != 0) "Нет," else "Да"), "\t",
-                     "Методан. верны\t", "\t", (if (error_2 != 0) "Нет," else "Да"), "\t", "\n")
-      text <- paste0(text,
-                     "да/нет (почему)?\t", "\t", fields_1$tag[error_1], "\t",
-                     "да/нет (почему)?\t", "\t", fields_2$tag[error_2], "\t", "\n")
 
    }
    
@@ -158,4 +180,4 @@ miw2.make <- function(count, train = F) {
 }
 
 set.seed(20211020)
-miw2.make(50)
+miw2.make(60, train=F, exam=F)
